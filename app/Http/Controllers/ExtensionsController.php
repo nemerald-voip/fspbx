@@ -56,6 +56,7 @@ use App\Exports\ExtensionsExport;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
 use App\Services\RingotelApiService;
+use App\Services\ExtensionPasswordService;
 use Illuminate\Support\Facades\Cache;
 
 class ExtensionsController extends Controller
@@ -1230,24 +1231,13 @@ public function store(StoreExtensionRequest $request)
         }
 
         try {
-            DB::beginTransaction();
             $currentDomain = session('domain_uuid');
 
             $extension = Extensions::whereKey($extension_uuid)
                 ->where('domain_uuid', $currentDomain)
                 ->firstOrFail();
 
-            // Generate new password
-            $newPassword = generate_sip_password();
-
-            // Update the extension password
-            $extension->password = $newPassword;
-            $extension->save();
-            $this->dispatchRingotelPasswordUpdate($extension);
-
-            DB::commit();
-
-            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
+            app(ExtensionPasswordService::class)->update($extension, generate_sip_password());
 
             // Return new credentials
             return response()->json([
@@ -1259,7 +1249,6 @@ public function store(StoreExtensionRequest $request)
                 ],
             ]);
         } catch (\Throwable $e) {
-            DB::rollback();
             logger('ExtensionsController@regenerateSipCredentials error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success'  => false,
@@ -2357,8 +2346,6 @@ public function store(StoreExtensionRequest $request)
         }
 
         try {
-            DB::beginTransaction();
-
             $data = request()->validate([
                 'extension_uuid' => ['required', 'uuid'],
                 'password' => ['required', 'string'],
@@ -2368,13 +2355,7 @@ public function store(StoreExtensionRequest $request)
                 ->where('domain_uuid', session('domain_uuid'))
                 ->firstOrFail();
 
-            $extension->password = $data['password'];
-            $extension->save();
-            $this->dispatchRingotelPasswordUpdate($extension);
-
-            DB::commit();
-
-            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
+            app(ExtensionPasswordService::class)->update($extension, $data['password']);
 
             return response()->json([
                 'success' => true,
@@ -2382,35 +2363,11 @@ public function store(StoreExtensionRequest $request)
                 'extension_uuid' => $extension->extension_uuid,
             ], 200);
         } catch (\Throwable $e) {
-            DB::rollBack();
             logger('ExtensionsController@updatePassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
-        }
-    }
-
-    private function dispatchRingotelPasswordUpdate(Extensions $extension): void
-    {
-        $mobileApps = MobileAppUsers::query()
-            ->where('domain_uuid', $extension->domain_uuid)
-            ->where('extension_uuid', $extension->extension_uuid)
-            ->whereNotNull('org_id')
-            ->where('org_id', '!=', '')
-            ->whereNotNull('user_id')
-            ->where('user_id', '!=', '')
-            ->get(['org_id', 'user_id'])
-            ->unique(fn ($app) => $app->org_id . ':' . $app->user_id);
-
-        foreach ($mobileApps as $mobileApp) {
-            // A password change must not activate a user or overwrite their profile.
-            UpdateAppSettings::dispatch([
-                'user_id' => $mobileApp->user_id,
-                'org_id' => $mobileApp->org_id,
-                'password' => $extension->password,
-                'no_email' => true,
-            ])->onQueue('default')->afterCommit();
         }
     }
 

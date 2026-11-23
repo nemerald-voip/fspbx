@@ -286,6 +286,10 @@ class UpdateApp extends Command
         $this->executeCommand('php artisan prov:templates:seed --no-interaction', 300);
         $this->executeCommand('php artisan email:templates:seed --no-interaction', 300);
 
+        // Idempotent maintenance: update generated DID conditions without
+        // rebuilding or overwriting administrator-edited routing actions.
+        $this->executeCommand('php artisan phone-numbers:refresh-matches --apply --no-interaction', 300, false);
+
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
 

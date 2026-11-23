@@ -44,6 +44,7 @@ class ExtensionPasswordRingotelSyncTest extends TestCase
         Http::fake();
 
         foreach ([
+            'v_domains' => ['domain_uuid', 'domain_name'],
             'v_extensions' => ['extension_uuid', 'domain_uuid', 'extension', 'password', 'user_context', 'effective_caller_id_name'],
             'extension_advanced_settings' => ['setting_uuid', 'extension_uuid', 'suspended'],
             'v_voicemails' => ['voicemail_uuid', 'domain_uuid', 'voicemail_id', 'voicemail_mail_to'],
@@ -66,6 +67,7 @@ class ExtensionPasswordRingotelSyncTest extends TestCase
         });
 
         foreach ([$this->extension => $this->domain, $this->otherExtension => $this->otherDomain] as $uuid => $domain) {
+            DB::table('v_domains')->insert(['domain_uuid' => $domain, 'domain_name' => $domain === $this->domain ? 'tenant.example.test' : 'other.example.test']);
             DB::table('v_extensions')->insert([
                 'extension_uuid' => $uuid, 'domain_uuid' => $domain, 'extension' => '100',
                 'password' => 'original-test-password', 'user_context' => 'tenant.example.test',

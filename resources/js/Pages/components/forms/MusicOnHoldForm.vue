@@ -36,7 +36,7 @@
                             </div>
 
                             <Vueform @mounted="(form) => form.disableValidation()" @submit="clearServerFormErrors" v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
+                                @error="handleError" @response="showServerFormErrors" :display-errors="false"
                                 :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -85,9 +85,14 @@
                                                 <TextElement name="music_on_hold_interval" input-type="number" :label="$t('Interval')" :floating="false" :columns="{ sm: { container: 4 } }" />
                                                 <TextElement name="music_on_hold_timer_name" :label="$t('Timer Name')" :floating="false" :columns="{ sm: { container: 4 } }" />
 
-                                                <SelectElement name="music_on_hold_chime_list" :items="chimeOptions" :groups="true" :search="true" :native="false"
-                                                    :label="$t('Chime')" input-type="search" allow-absent autocomplete="off" :placeholder="$t('No chime')"
-                                                    :floating="false" :strict="false" :columns="{ sm: { container: 4 } }" />
+                                                <ListElement name="music_on_hold_chime_list" :label="$t('Chimes')"
+                                                    :description="$t('Chimes play in this order, then repeat.')"
+                                                    :add-text="$t('Add chime')" :initial="0" :sort="true">
+                                                    <template #default="{ index }">
+                                                        <SelectElement :name="index" :items="chimeOptions" :groups="true" :search="true" :native="false"
+                                                            :label="$t('Chime')" :floating="false" :strict="false" allow-absent autocomplete="off" />
+                                                    </template>
+                                                </ListElement>
 
                                                 <TextElement name="music_on_hold_chime_freq" input-type="number" :label="$t('Chime Frequency')" :floating="false" :columns="{ sm: { container: 6 } }" />
                                                 <TextElement name="music_on_hold_chime_max" input-type="number" :label="$t('Chime Maximum')" :floating="false" :columns="{ sm: { container: 6 } }" />
@@ -108,7 +113,7 @@
 </template>
 
 <script setup>
-import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
+import { clearServerFormErrors, showServerFormErrors } from '../../../composables/serverFormErrors.js';
 import { trans } from '@i18n';
 import { computed, ref, watch, watchEffect } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
@@ -147,7 +152,7 @@ const defaultValues = computed(() => ({
     music_on_hold_channels: String(props.options?.item?.music_on_hold_channels ?? "1"),
     music_on_hold_interval: props.options?.item?.music_on_hold_interval ?? 20,
     music_on_hold_timer_name: props.options?.item?.music_on_hold_timer_name ?? "soft",
-    music_on_hold_chime_list: props.options?.item?.music_on_hold_chime_list ?? null,
+    music_on_hold_chime_list: (props.options?.item?.music_on_hold_chime_list ?? '').split(',').map(chime => chime.trim()).filter(Boolean),
     music_on_hold_chime_freq: props.options?.item?.music_on_hold_chime_freq ?? null,
     music_on_hold_chime_max: props.options?.item?.music_on_hold_chime_max ?? null,
 }));
@@ -260,26 +265,6 @@ const submitForm = async (FormData, form$) => {
         props.routes.update.replace("__STREAM__", requestData.music_on_hold_uuid || props.options?.item?.music_on_hold_uuid),
         requestData
     );
-};
-
-function clearErrorsRecursive(el$) {
-    el$.messageBag?.clear();
-
-    if (el$.children$) {
-        Object.values(el$.children$).forEach((childEl$) => clearErrorsRecursive(childEl$));
-    }
-}
-
-const handleResponse = (response, form$) => {
-    Object.values(form$.elements$).forEach((el$) => clearErrorsRecursive(el$));
-
-    if (response.data.errors) {
-        Object.keys(response.data.errors).forEach((elName) => {
-            if (form$.el$(elName)) {
-                form$.el$(elName).messageBag.append(response.data.errors[elName][0]);
-            }
-        });
-    }
 };
 
 const handleSuccess = (response) => {

@@ -38,7 +38,7 @@ build_dependency() {
         dpkg-buildpackage -b -us -uc -j"$JOBS"
     )
 }
-build_dependency sofia-sip "$SOFIA_SIP_VERSION" 1.13.18
+build_dependency sofia-sip "$SOFIA_SIP_VERSION" 1.13.19
 build_dependency spandsp "$SPANDSP_VERSION" 3.1.1
 # Installing development packages can replace distro development headers on
 # this disposable builder. Runtime targets only receive the runtime libraries.
@@ -50,6 +50,7 @@ fs_check_libraries
 
 mkdir "$BUILD_DIR/freeswitch"
 fs_clone https://github.com/nemerald-voip/freeswitch.git "$FREESWITCH_VERSION" "$BUILD_DIR/freeswitch/source"
+fs_check_source_version "$BUILD_DIR/freeswitch/source"
 cd "$BUILD_DIR/freeswitch/source"
 python3 "$FS_CONFIG_TOOL" select-modules "$PWD" "$FS_APP_DIR/resources" \
     "${FREESWITCH_MODULES_FILE:-$FS_INSTALL_DIR/freeswitch-modules.conf}" debian/modules.conf

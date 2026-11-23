@@ -18,6 +18,8 @@ class DialplanBuilderService
                 'dialplan_uuid' => __('Select a valid routing target in this account.'),
             ]);
         }
+        $phoneNumber->destination_number_regex = app(PhoneNumberService::class)
+            ->dialplanMatchForDestination($phoneNumber)['expression'];
         $originalDid = app(PhoneNumberService::class)->originalDid($phoneNumber);
         // logger($phoneNumber);
         // Data to pass to the Blade template
@@ -71,6 +73,13 @@ class DialplanBuilderService
         $dialPlan->save();
 
         $this->generateDialplanDetailsForPhoneNumber($phoneNumber, $dialPlan, $originalDid, $domainName);
+
+        // Direct rebuilds must keep the early inbound lookup in sync with XML.
+        if ($phoneNumber->exists && $phoneNumber->isDirty('destination_number_regex')) {
+            Destinations::query()->whereKey($phoneNumber->getKey())->where('domain_uuid', $phoneNumber->domain_uuid)
+                ->update(['destination_number_regex' => $phoneNumber->destination_number_regex]);
+            $phoneNumber->syncOriginalAttribute('destination_number_regex');
+        }
 
         //clear fusionpbx cache
         $this->clearCacheForPhoneNumber($phoneNumber);

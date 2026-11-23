@@ -122,7 +122,7 @@ class StoreAssemblyAiConfigRequest extends FormRequest
             // 1) General & Language
             'speech_models'    => ['nullable', 'array'],
             'speech_models.*'  => ['string', Rule::in(['universal-3-pro', 'universal-2'])],
-            'language_code'    => ['nullable', 'string', 'max:64'], // e.g. en_us
+            'language_code'    => ['nullable', 'string', 'max:64', Rule::prohibitedIf($this->boolean('language_detection'))], // e.g. en_us
             'keyterms_prompt'  => ['nullable', 'string', 'max:5000'],
             'multichannel'     => ['nullable', 'boolean'],
 
@@ -186,6 +186,7 @@ class StoreAssemblyAiConfigRequest extends FormRequest
     {
         return [
             ...ValidationMessages::common(),
+            'language_code.prohibited' => __('Clear Language Code when automatic language detection is enabled.'),
             'language_confidence_threshold.min' => __('Language confidence must be between 0 and 1.'),
             'language_confidence_threshold.max' => __('Language confidence must be between 0 and 1.'),
 

@@ -9,6 +9,79 @@ use PHPUnit\Framework\TestCase;
 
 class PhoneNumberFormattingTest extends TestCase
 {
+    /** @dataProvider destinationNumbers */
+    public function test_destination_matches_carrier_formats_and_preserves_captures(
+        string $country, ?string $prefix, string $number, string $canonical, array $accepted, array $rejected
+    ): void {
+        $service = new class($country) extends PhoneNumberService {
+            public function __construct(private string $country) {}
+            public function countryCodeForDomain(?string $domainUuid = null): string { return $this->country; }
+        };
+        $match = $service->dialplanMatchForDestination(new Destinations([
+            'destination_number' => $number, 'destination_prefix' => $prefix,
+        ]));
+        $this->assertSame($canonical, $match['canonical']);
+        foreach ($accepted as $value) {
+            $this->assertSame(1, preg_match('/'.$match['expression'].'/D', $value, $captures), $value);
+            $this->assertSame(str_contains($number, 'X') ? substr($value, -10) : $number, $captures[1]);
+        }
+        foreach ($rejected as $value) {
+            $this->assertSame(0, preg_match('/'.$match['expression'].'/D', $value), $value);
+        }
+    }
+
+    public static function destinationNumbers(): array
+    {
+        return require dirname(__DIR__).'/Fixtures/phone_number_matches.php';
+    }
+
+    public function test_destination_handles_separate_area_and_zero_trunk_prefix(): void
+    {
+        $service = new class extends PhoneNumberService {
+            public function countryCodeForDomain(?string $domainUuid = null): string { return 'US'; }
+        };
+        $match = $service->dialplanMatchForDestination(new Destinations([
+            'destination_prefix' => '44', 'destination_trunk_prefix' => '0',
+            'destination_area_code' => '20', 'destination_number' => '79460958',
+        ]));
+        foreach (['+442079460958', '442079460958', '02079460958', '2079460958'] as $value) {
+            $this->assertSame(1, preg_match('/'.$match['expression'].'/D', $value));
+        }
+    }
+
+    public function test_destination_preserves_explicit_regex_and_digit_masks(): void
+    {
+        $service = new class extends PhoneNumberService {
+            public function countryCodeForDomain(?string $domainUuid = null): string { return 'US'; }
+        };
+        $match = $service->dialplanMatchForDestination(new Destinations(['destination_number' => '^(?<number>1001|1002)$']));
+        $this->assertSame('^(?<number>1001|1002)$', $match['expression']);
+        $match = $service->dialplanMatchForDestination(new Destinations(['destination_number' => 'NZXX']));
+        $this->assertSame(1, preg_match('/'.$match['expression'].'/', '2100'));
+        $this->assertSame(0, preg_match('/'.$match['expression'].'/', '1000'));
+
+        $range = $service->dialplanMatchForDestination(new Destinations([
+            'destination_prefix' => '33', 'destination_trunk_prefix' => '0', 'destination_number' => '1234567XX',
+        ]));
+        foreach (['+33123456789', '33123456789', '0123456789', '123456789'] as $value) {
+            $this->assertSame(1, preg_match('/'.$range['expression'].'/', $value));
+        }
+    }
+
+    public function test_destination_retains_explicit_nonstandard_trunk_prefix(): void
+    {
+        $service = new class extends PhoneNumberService {
+            public function countryCodeForDomain(?string $domainUuid = null): string { return 'US'; }
+        };
+        $match = $service->dialplanMatchForDestination(new Destinations([
+            'destination_prefix' => '1', 'destination_trunk_prefix' => '9', 'destination_number' => '5304792220',
+        ]));
+        foreach (['+15304792220', '15304792220', '5304792220', '95304792220'] as $value) {
+            $this->assertSame(1, preg_match('/'.$match['expression'].'/', $value, $captures));
+            $this->assertSame('5304792220', $captures[1]);
+        }
+    }
+
     /** @dataProvider originalDids */
     public function test_original_did_normalization(array $attributes, string $country, ?string $expected): void
     {

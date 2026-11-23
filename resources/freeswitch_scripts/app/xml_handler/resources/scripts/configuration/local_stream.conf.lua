@@ -47,7 +47,21 @@
 			if (debug["sql"]) then
 				freeswitch.consoleLog("notice", "[xml_handler] SQL: " .. sql .. "\n");
 			end
-			x = 0;
+			local voice_dir = table.concat({sounds_dir, freeswitch.getGlobalVariable("default_language") or "en",
+				freeswitch.getGlobalVariable("default_dialect") or "us", freeswitch.getGlobalVariable("default_voice") or "callie"}, "/")
+
+			local function resolve_chime(path, rate, domain_name)
+				local category, filename = path:match("^([^/]+)/([^/]+)$")
+				if category then
+					local base = voice_dir .. "/" .. category .. "/"
+					return file_exists(base .. rate .. "/" .. filename) or file_exists(base .. filename) or path
+				end
+				-- Older streams stored account recordings as bare filenames.
+				if recordings_dir and domain_name and domain_name ~= "" and not path:find("/", 1, true) then
+					return file_exists(recordings_dir .. "/" .. domain_name .. "/" .. path) or path
+				end
+				return path
+			end
 			dbh:query(sql, function(row)
 
 				--combine the name and domain_name
@@ -76,18 +90,11 @@
 					interval = '20';
 				end
 
-				--add the full path to the chime list
-				chime_list = row.music_on_hold_chime_list;
-				if (chime_list ~= nil) then
-					chime_array = explode(",", chime_list);
-					chime_list = "";
-					for k,v in pairs(chime_array) do
-						f = explode("/", v);
-						if (f[1] ~= nil and f[2] ~= nil and file_exists(sounds_dir.."/en/us/callie/"..f[1].."/"..rate.."/"..f[2])) then
-							chime_list = chime_list .. sounds_dir.."/en/us/callie/"..v;
-						else
-							chime_list = chime_list .. v;
-						end
+				local chimes = {}
+				for entry in (row.music_on_hold_chime_list or ""):gmatch("[^,]+") do
+					local path = entry:match("^%s*(.-)%s*$")
+					if path ~= "" then
+						table.insert(chimes, resolve_chime(path, rate, row.domain_name))
 					end
 				end
 
@@ -105,8 +112,8 @@
 				xml:append([[			<param name="channels" value="]] .. xml.sanitize(channels) .. [["/>]]);
 				xml:append([[			<param name="interval" value="]] .. xml.sanitize(interval) .. [["/>]]);
 				xml:append([[			<param name="timer-name" value="]] .. xml.sanitize(timer_name) ..[["/>]]);
-				if (chime_list ~= nil) then
-					xml:append([[			<param name="chime-list" value="]] .. xml.sanitize(chime_list) .. [["/>]]);
+				if #chimes > 0 then
+					xml:append([[			<param name="chime-list" value="]] .. xml.escape(table.concat(chimes, ",")) .. [["/>]]);
 				end
 				if (row.music_on_hold_chime_freq ~= nil) then
 					xml:append([[			<param name="chime-freq" value="]] .. xml.sanitize(row.music_on_hold_chime_freq) .. [["/>]]);

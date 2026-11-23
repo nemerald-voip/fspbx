@@ -7,9 +7,9 @@ sidebar_position: 4
 
 # Upgrade FreeSWITCH
 
-**This update installs FreeSWITCH 1.11.3.**
+**This update installs FreeSWITCH 1.11.4 with the FS PBX fixes.**
 
-FreeSWITCH is updated separately from FS PBX. You can upgrade directly from FreeSWITCH 1.10.12 or 1.11.1 using the steps below.
+FreeSWITCH is updated separately from FS PBX. You can upgrade directly from FreeSWITCH 1.10.12, 1.11.1, or 1.11.3 using the steps below. New FS PBX installations include this version automatically.
 
 ## Before you begin
 
@@ -43,10 +43,12 @@ Wait for `FreeSWITCH installation complete.` before proceeding. If the script fa
 ## 3. Restart when ready
 
 ```bash
-sudo systemctl restart freeswitch
+fs_cli -x "shutdown now"
 ```
 
-This activates the update and interrupts active calls. No additional configuration reload is required.
+This shuts down FreeSWITCH. The standard FS PBX service starts it again automatically (`Restart=always`), activating the update. Active calls are interrupted. No additional configuration reload is required.
+
+If you have disabled automatic service restarts, use `sudo systemctl restart freeswitch` instead.
 
 ## 4. Verify
 
@@ -56,7 +58,7 @@ sudo fs_cli -x version
 sudo fs_cli -x 'sofia status'
 ```
 
-Confirm that FreeSWITCH reports **1.11.3** and the expected SIP profiles are running. Test phone registration, inbound and outbound calls, audio, and any TLS, fax, or queue features used on this server.
+Confirm that FreeSWITCH reports **1.11.4** and the expected SIP profiles are running. Test phone registration, inbound and outbound calls, audio, and any TLS, fax, or queue features used on this server.
 
 If startup fails:
 

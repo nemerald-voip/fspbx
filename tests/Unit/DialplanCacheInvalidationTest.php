@@ -9,21 +9,33 @@ use Tests\TestCase;
 
 class DialplanCacheInvalidationTest extends TestCase
 {
-    public function test_public_context_invalidation_clears_multiple_and_single_mode_entries(): void
+    /** @dataProvider publicContexts */
+    public function test_public_context_invalidation_clears_multiple_and_single_mode_entries(string $context): void
     {
-        $this->withFileCache(function (string $cachePath) {
+        $this->withFileCache(function (string $cachePath) use ($context) {
             $this->putCacheFile($cachePath, 'dialplan.public');
             $this->putCacheFile($cachePath, 'dialplan.public.15304792220');
             $this->putCacheFile($cachePath, 'dialplan.public.18005550100');
             $this->putCacheFile($cachePath, 'dialplan.example.com');
+            $this->putCacheFile($cachePath, 'dialplan.public@carrier.selection-v2.single.miss');
+            $this->putCacheFile($cachePath, 'dialplan.carrier.public');
+            $this->putCacheFile($cachePath, 'dialplan.carrier.public.selection-v2.multiple.hit');
 
-            (new DialplanService())->clearDialplanCache('public');
+            (new DialplanService())->clearDialplanCache($context);
 
             $this->assertFileDoesNotExist($cachePath . '/dialplan.public');
             $this->assertFileDoesNotExist($cachePath . '/dialplan.public.15304792220');
             $this->assertFileDoesNotExist($cachePath . '/dialplan.public.18005550100');
             $this->assertFileExists($cachePath . '/dialplan.example.com');
+            $this->assertFileDoesNotExist($cachePath . '/dialplan.public@carrier.selection-v2.single.miss');
+            $this->assertFileDoesNotExist($cachePath . '/dialplan.carrier.public');
+            $this->assertFileDoesNotExist($cachePath . '/dialplan.carrier.public.selection-v2.multiple.hit');
         });
+    }
+
+    public static function publicContexts(): array
+    {
+        return [['public'], ['public@carrier'], ['carrier.public']];
     }
 
     public function test_domain_context_invalidation_does_not_clear_other_contexts(): void

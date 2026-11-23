@@ -67,14 +67,8 @@ class Destinations extends Model
     {
         parent::boot();
         static::saving(function ($model) {
-            // Always update these fields before save
-            $destination_numbers = array_filter([
-                'destination_prefix' => $model->destination_prefix,
-                'destination_trunk_prefix' => $model->destination_trunk_prefix,
-                'destination_area_code' => $model->destination_area_code,
-                'destination_number' => $model->destination_number,
-            ]);
-            $model->attributes['destination_number_regex'] = $model->to_regex($destination_numbers);
+            $model->attributes['destination_number_regex'] = app(PhoneNumberService::class)
+                ->dialplanMatchForDestination($model)['expression'];
 
             $model->attributes['update_date'] = date('Y-m-d H:i:s');
             $model->attributes['update_user'] = session('user_uuid');
@@ -154,65 +148,4 @@ class Destinations extends Model
     }
 
 
-    /**
-     * Convert destination number to a regular expression
-     *
-     * @param array $array
-     * @return string
-     */
-    public function to_regex($array)
-    {
-        $regex_parts = [];
-
-        // If all elements are present
-        if (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
-            $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
-            $regex_parts[] = "{$array['destination_trunk_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
-            $regex_parts[] = "({$array['destination_area_code']}{$array['destination_number']})";
-        }
-        // Handle cases with missing elements
-        elseif (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_number'])) {
-            $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_number']})";
-            $regex_parts[] = "{$array['destination_trunk_prefix']}?({$array['destination_number']})";
-        } elseif (!empty($array['destination_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
-            $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
-        } elseif (!empty($array['destination_number'])) {
-            $destination_prefix = $array['destination_prefix'] ?? '';
-            $destination_number = $array['destination_number'];
-
-            // Add capturing group for the destination number
-            $destination_regex = "($destination_number)";
-
-            // Escape "+" in the number if present
-            if (strpos($destination_number, '+') === 0) {
-                $destination_regex = "\\+?" . substr($destination_number, 1);
-            }
-
-            // Add prefix handling
-            if (!empty($destination_prefix)) {
-                $destination_prefix = str_replace("+", "", $destination_prefix);
-                $plus = '\+?';
-                if (strlen($destination_prefix) == 1) {
-                    $destination_prefix = $plus . $destination_prefix . '?';
-                } else {
-                    $destination_prefix = $plus . '(?:' . $destination_prefix . ')?';
-                }
-            }
-
-            // Convert N, X, Z patterns to regex
-            $destination_regex = str_ireplace(["N", "X", "Z"], ["[2-9]", "[0-9]", "[1-9]"], $destination_regex);
-
-            // Ensure regex starts with "^" and ends with "$"
-            $destination_regex = "^" . $destination_prefix . $destination_regex . "$";
-
-            return $destination_regex;
-        }
-
-        // Combine regex parts into one pattern with capturing group
-        if (!empty($regex_parts)) {
-            return "^(" . implode('|', $regex_parts) . ")$";
-        }
-
-        return ''; // Return empty string if no valid regex is generated
-    }
 }

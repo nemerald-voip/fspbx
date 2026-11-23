@@ -157,6 +157,12 @@
                                                                                 <li class="tocify-item level-2" data-unique="extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">
                                 <a href="#extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">Retrieve an extension</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials">
+                                <a href="#extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials">Retrieve SIP credentials</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="extensions-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials">
+                                <a href="#extensions-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials">Regenerate SIP credentials</a>
+                            </li>
                                                                                 <li class="tocify-item level-2" data-unique="extensions-POSTapi-v1-domains--domain_uuid--extensions">
                                 <a href="#extensions-POSTapi-v1-domains--domain_uuid--extensions">Create an extension</a>
                             </li>
@@ -376,7 +382,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: November 7, 2026</li>
+        <li>Last updated: November 23, 2026</li>
     </ul>
 </div>
 
@@ -2797,7 +2803,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="51759db8-c8bf-4b2f-b48a-6577d7ad6a1a"
                data-component="body">
     <br>
-<p>Optional device profile UUID. Example: <code>51759db8-c8bf-4b2f-b48a-6577d7ad6a1a</code></p>
+<p>Optional device profile UUID. Must be a valid UUID. Example: <code>51759db8-c8bf-4b2f-b48a-6577d7ad6a1a</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>device_key_template_uuid</code></b>&nbsp;&nbsp;
@@ -2989,8 +2995,8 @@ Must be one of:
     \"device_address\": \"0004f23a5bc7\",
     \"serial_number\": \"8603123456789\",
     \"device_profile_uuid\": \"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",
-    \"device_template\": \"Yealink T46U\",
     \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",
+    \"device_template\": \"Yealink T46U\",
     \"device_description\": \"Reception desk device\"
 }"
 </code></pre></div>
@@ -3011,8 +3017,8 @@ let body = {
     "device_address": "0004f23a5bc7",
     "serial_number": "8603123456789",
     "device_profile_uuid": "51759db8-c8bf-4b2f-b48a-6577d7ad6a1a",
-    "device_template": "Yealink T46U",
     "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
+    "device_template": "Yealink T46U",
     "device_description": "Reception desk device"
 };
 
@@ -3246,18 +3252,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="51759db8-c8bf-4b2f-b48a-6577d7ad6a1a"
                data-component="body">
     <br>
-<p>Optional device profile UUID. Example: <code>51759db8-c8bf-4b2f-b48a-6577d7ad6a1a</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>device_template</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
-                <input type="text" style="display: none"
-                              name="device_template"                data-endpoint="PATCHapi-v1-domains--domain_uuid--devices--device_uuid-"
-               value="Yealink T46U"
-               data-component="body">
-    <br>
-<p>Deprecated legacy template identifier. Prefer device_template_uuid. Example: <code>Yealink T46U</code></p>
+<p>Optional device profile UUID. Must be a valid UUID. Example: <code>51759db8-c8bf-4b2f-b48a-6577d7ad6a1a</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>device_template_uuid</code></b>&nbsp;&nbsp;
@@ -3269,6 +3264,17 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>Optional provisioning template UUID. Must be a valid UUID. Example: <code>a6cf59ba-4b2b-4bdd-b870-35cc55bca146</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>device_template</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="device_template"                data-endpoint="PATCHapi-v1-domains--domain_uuid--devices--device_uuid-"
+               value="Yealink T46U"
+               data-component="body">
+    <br>
+<p>Deprecated legacy template identifier. Prefer device_template_uuid. Example: <code>Yealink T46U</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>device_description</code></b>&nbsp;&nbsp;
@@ -5338,18 +5344,547 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
-                    <h2 id="extensions-POSTapi-v1-domains--domain_uuid--extensions">Create an extension</h2>
+                    <h2 id="extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials">Retrieve SIP credentials</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
-<p>Creates a new extension in the specified domain.</p>
-<p>Notes:</p>
+<p>Returns the extension's current SIP username, password, and domain.</p>
+<p>Access rules:</p>
 <ul>
-<li>Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.</li>
-<li>Returns the created extension object.</li>
+<li>Caller must have access to the target domain.</li>
+<li>Caller must have both <code>extension_view</code> and <code>extension_password</code> permissions.</li>
+<li>The extension must belong to the domain in the URL.</li>
 </ul>
+<p>Treat the response as a secret. Use HTTPS and do not log or cache it.
+Responses include <code>Cache-Control: no-store, private</code>.</p>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b/sip-credentials" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b/sip-credentials"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;object&quot;: &quot;extension_sip_credentials&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;extension&quot;: &quot;1001&quot;,
+    &quot;password&quot;: &quot;example-only-sip-password&quot;,
+    &quot;domain&quot;: &quot;pbx.example.com&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid extension UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (missing permission)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;extension_password&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Extension not found in domain):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/extensions/{extension_uuid}/sip-credentials"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions/{extension_uuid}/sip-credentials</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid--sip-credentials"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The extension UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                    </form>
+
+    <h3>Response</h3>
+    <h4 class="fancy-heading-panel"><b>Response Fields</b></h4>
+    <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>SIP username (extension number).</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Current SIP password. Sensitive; never log or cache this value.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Routing context shown as Domain in the portal. If the value is <code>public</code>, use the account’s domain name for SIP registration.</p>
+        </div>
+                        <h2 id="extensions-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials">Regenerate SIP credentials</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Generates and saves a new SIP password, then returns the updated credentials.
+The SIP username and domain stay the same. No request body is required;
+callers cannot choose the password or override the domain or extension in the URL.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain.</li>
+<li>Caller must have both <code>extension_edit</code> and <code>extension_password</code> permissions.</li>
+<li>The extension must belong to the domain in the URL.</li>
+</ul>
+<p>Reprovision phones linked to this extension so they receive the new password.
+Update manually configured phones with the password in the response.
+Linked Ringotel users receive the update through background synchronization.
+Avoid automatic retries because each successful request generates a new password.
+Treat the response as a secret. Use HTTPS and do not log or cache it.
+Responses include <code>Cache-Control: no-store, private</code>.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b/regenerate-sip-credentials" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b/regenerate-sip-credentials"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;object&quot;: &quot;extension_sip_credentials&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;extension&quot;: &quot;1001&quot;,
+    &quot;password&quot;: &quot;example-only-new-sip-password&quot;,
+    &quot;domain&quot;: &quot;pbx.example.com&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid extension UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (missing permission)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;success&quot;: false,
+    &quot;message&quot;: &quot;Forbidden (missing permission).&quot;,
+    &quot;error&quot;: {
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;permission&quot;: &quot;extension_password&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Extension not found in domain):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Reset failed):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;Unable to regenerate SIP credentials.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;,
+        &quot;param&quot;: null
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/extensions/{extension_uuid}/regenerate-sip-credentials"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions/{extension_uuid}/regenerate-sip-credentials</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions--extension_uuid--regenerate-sip-credentials"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The extension UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                    </form>
+
+    <h3>Response</h3>
+    <h4 class="fancy-heading-panel"><b>Response Fields</b></h4>
+    <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>SIP username (extension number).</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Newly generated SIP password. Sensitive; never log or cache this value.</p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+<br>
+<p>Routing context shown as Domain in the portal. If the value is <code>public</code>, use the account’s domain name for SIP registration.</p>
+        </div>
+                        <h2 id="extensions-POSTapi-v1-domains--domain_uuid--extensions">Create an extension</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Create an extension in the selected account. Provide the extension number,
+the first name to display in the directory, and whether to create a voicemail box.</p>
+<p>Requires access to the account and the <code>extension_add</code> permission.</p>
 
 <span id="example-requests-POSTapi-v1-domains--domain_uuid--extensions">
 <blockquote>Example request:</blockquote>
@@ -5364,6 +5899,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --data "{
     \"extension\": 1001,
     \"directory_first_name\": \"Front\",
+    \"voicemail_enabled\": true,
     \"directory_last_name\": \"Desk\",
     \"voicemail_mail_to\": \"frontdesk@example.com\",
     \"voicemail_sms_to\": \"+12135551212\",
@@ -5395,14 +5931,14 @@ You can check the Dev Tools console for debugging information.</code></pre>
     \"emergency_caller_id_number\": \"+12135559876\",
     \"outbound_caller_id_name\": \"Front Desk\",
     \"emergency_caller_id_name\": \"Front Desk\",
-    \"voicemail_enabled\": true,
     \"voicemail_file\": \"link\",
     \"voicemail_local_after_email\": true,
     \"voicemail_transcription_enabled\": true,
     \"voicemail_description\": \"Front Desk Voicemail\",
     \"voicemail_password\": 1001,
     \"voicemail_tutorial\": true,
-    \"voicemail_recording_instructions\": true
+    \"voicemail_recording_instructions\": true,
+    \"user_context\": \"public\"
 }"
 </code></pre></div>
 
@@ -5421,6 +5957,7 @@ const headers = {
 let body = {
     "extension": 1001,
     "directory_first_name": "Front",
+    "voicemail_enabled": true,
     "directory_last_name": "Desk",
     "voicemail_mail_to": "frontdesk@example.com",
     "voicemail_sms_to": "+12135551212",
@@ -5452,14 +5989,14 @@ let body = {
     "emergency_caller_id_number": "+12135559876",
     "outbound_caller_id_name": "Front Desk",
     "emergency_caller_id_name": "Front Desk",
-    "voicemail_enabled": true,
     "voicemail_file": "link",
     "voicemail_local_after_email": true,
     "voicemail_transcription_enabled": true,
     "voicemail_description": "Front Desk Voicemail",
     "voicemail_password": 1001,
     "voicemail_tutorial": true,
-    "voicemail_recording_instructions": true
+    "voicemail_recording_instructions": true,
+    "user_context": "public"
 };
 
 fetch(url, {
@@ -5519,6 +6056,20 @@ fetch(url, {
 }</code>
  </pre>
             <blockquote>
+            <p>Example response (400, Unsupported dialplan context):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Use public or the target account domain name for user_context.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;user_context&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
             <p>Example response (401, Unauthenticated):</p>
         </blockquote>
                 <pre>
@@ -5528,6 +6079,20 @@ fetch(url, {
         &quot;type&quot;: &quot;authentication_error&quot;,
         &quot;message&quot;: &quot;Unauthenticated.&quot;,
         &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Missing context permission):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Setting user_context requires the extension_user_context permission.&quot;,
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;param&quot;: &quot;user_context&quot;
     }
 }</code>
  </pre>
@@ -5643,6 +6208,27 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="body">
     <br>
 <p>First name for directory display. Must not be greater than 60 characters. Example: <code>Front</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+ &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Set to true to create a mailbox for this extension, or false to skip it. Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>directory_last_name</code></b>&nbsp;&nbsp;
@@ -6056,27 +6642,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>Emergency caller ID name. Example: <code>Front Desk</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
-<small>boolean</small>&nbsp;
- &nbsp;
-                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
-            <input type="radio" name="voicemail_enabled"
-                   value="true"
-                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-                   data-component="body"             >
-            <code>true</code>
-        </label>
-        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
-            <input type="radio" name="voicemail_enabled"
-                   value="false"
-                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-                   data-component="body"             >
-            <code>false</code>
-        </label>
-    <br>
-<p>Whether voicemail should be created/enabled. If true, a voicemail box will be created. If false, no voicemail box is created. Example: <code>true</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
@@ -6217,6 +6782,17 @@ Must be one of:
     <br>
 <p>Whether voicemail recording instructions are enabled. Defaults to true if omitted. Example: <code>true</code></p>
         </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_context</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="user_context"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="public"
+               data-component="body">
+    <br>
+<p>Defaults to the account’s domain name for normal call routing. Set to <code>public</code> to apply inbound routes to calls from this extension. Setting this field requires the <code>extension_user_context</code> permission. Must not be greater than 255 characters. Example: <code>public</code></p>
+        </div>
         </form>
 
                     <h2 id="extensions-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">Update an extension</h2>
@@ -6225,22 +6801,10 @@ Must be one of:
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
-<p>Updates an existing extension in the specified domain.</p>
-<p>Access rules:</p>
-<ul>
-<li>Caller must have access to the target domain (domain scope).</li>
-<li>Caller must have the <code>extension_edit</code> permission.</li>
-</ul>
-<p>Notes:</p>
-<ul>
-<li>Fields are optional. If a field is omitted, the current value is unchanged.</li>
-<li>Voicemail behavior:
-<ul>
-<li>If <code>voicemail_enabled</code> is omitted, voicemail settings are unchanged.</li>
-<li>If <code>voicemail_enabled</code> is true, a voicemail box is created (or updated) for this extension.</li>
-<li>If <code>voicemail_enabled</code> is false, voicemail is disabled for this extension.</li>
-</ul></li>
-</ul>
+<p>Send the settings you want to change for an extension in the selected account.
+For example, set <code>voicemail_enabled</code> to <code>true</code> to enable its mailbox or
+<code>false</code> to disable it.</p>
+<p>Requires access to the account and the <code>extension_edit</code> permission.</p>
 
 <span id="example-requests-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">
 <blockquote>Example request:</blockquote>
@@ -6293,7 +6857,8 @@ Must be one of:
     \"voicemail_description\": \"Front Desk Voicemail\",
     \"voicemail_password\": 1001,
     \"voicemail_tutorial\": true,
-    \"voicemail_recording_instructions\": true
+    \"voicemail_recording_instructions\": true,
+    \"user_context\": \"public\"
 }"
 </code></pre></div>
 
@@ -6350,7 +6915,8 @@ let body = {
     "voicemail_description": "Front Desk Voicemail",
     "voicemail_password": 1001,
     "voicemail_tutorial": true,
-    "voicemail_recording_instructions": true
+    "voicemail_recording_instructions": true,
+    "user_context": "public"
 };
 
 fetch(url, {
@@ -6396,6 +6962,20 @@ fetch(url, {
 }</code>
  </pre>
             <blockquote>
+            <p>Example response (400, Unsupported dialplan context):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Use public or the target account domain name for user_context.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;user_context&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
             <p>Example response (401, Unauthenticated):</p>
         </blockquote>
                 <pre>
@@ -6419,6 +6999,20 @@ fetch(url, {
         &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
         &quot;code&quot;: &quot;forbidden_domain&quot;,
         &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Missing context permission):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Setting user_context requires the extension_user_context permission.&quot;,
+        &quot;code&quot;: &quot;forbidden_permission&quot;,
+        &quot;param&quot;: &quot;user_context&quot;
     }
 }</code>
  </pre>
@@ -7107,6 +7701,17 @@ Must be one of:
         </label>
     <br>
 <p>Whether voicemail recording instructions are enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_context</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="user_context"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="public"
+               data-component="body">
+    <br>
+<p>Omit to keep the current routing. Use the account’s domain name for normal routing or <code>public</code> to apply inbound routes to calls from this extension. Setting this field requires the <code>extension_user_context</code> permission. Must not be greater than 255 characters. Example: <code>public</code></p>
         </div>
         </form>
 
@@ -12842,7 +13447,7 @@ to mono, 16 kHz, 16-bit PCM WAV for FreeSWITCH playback.</p>
     --header "Accept: application/json" \
     --form "recording_name=Main Menu Greeting"\
     --form "recording_description=Primary virtual receptionist greeting"\
-    --form "file=@/tmp/phppsihqoo7tlk353MlGlO" </code></pre></div>
+    --form "file=@/tmp/php1ar1p7jpp21v25JEjwW" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -13092,7 +13697,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phppsihqoo7tlk353MlGlO</code></p>
+<p>WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/php1ar1p7jpp21v25JEjwW</code></p>
         </div>
         </form>
 
@@ -13362,7 +13967,7 @@ At least one update field is required.</p>
     --form "recording_name=Updated Main Menu Greeting"\
     --form "recording_description=Updated automatically"\
     --form "_method=PATCH"\
-    --form "file=@/tmp/php03injdbs3sf52Uuax4h" </code></pre></div>
+    --form "file=@/tmp/phpg38huru4q3jg7GoOEO9" </code></pre></div>
 
 
 <div class="javascript-example">
@@ -13669,7 +14274,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value=""
                data-component="body">
     <br>
-<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/php03injdbs3sf52Uuax4h</code></p>
+<p>Optional WAV, MP3, or M4A audio file. Maximum size: 50 MB. Example: <code>/tmp/phpg38huru4q3jg7GoOEO9</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>_method</code></b>&nbsp;&nbsp;

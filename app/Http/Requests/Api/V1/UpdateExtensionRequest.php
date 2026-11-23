@@ -85,6 +85,7 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_password'               => ['sometimes', 'nullable', 'numeric'],
             'voicemail_tutorial'               => ['sometimes', 'boolean'],
             'voicemail_recording_instructions' => ['sometimes', 'boolean'],
+            'user_context' => ['sometimes', 'filled', 'string', 'max:255'],
         ];
     }
 
@@ -304,6 +305,10 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_destinations' => [
                 'description' => 'Optional voicemail destinations array (if used by your routing). If omitted, value is unchanged.',
                 'example' => '[]',
+            ],
+            'user_context' => [
+                'description' => 'Omit to keep the current routing. Use the account’s domain name for normal routing or `public` to apply inbound routes to calls from this extension. Setting this field requires the `extension_user_context` permission.',
+                'example' => 'public',
             ],
         ];
     }

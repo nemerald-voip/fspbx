@@ -32,6 +32,8 @@ class MusicOnHoldService
             $name = $this->safeCategoryName($validated['music_on_hold_name']);
             $familyPath = $this->defaultStreamPath($domainUuid, $name);
             $existingFamily = $musicOnHold->exists ? $this->streamFamily($musicOnHold) : collect();
+            $chimes = $validated['music_on_hold_chime_list'] ?? [];
+            $chimeList = $chimes === [] ? null : implode(',', $chimes);
             $representative = null;
 
             foreach (self::OUTPUT_RATES as $rate) {
@@ -51,7 +53,7 @@ class MusicOnHoldService
                     'music_on_hold_channels' => $validated['music_on_hold_channels'],
                     'music_on_hold_interval' => $validated['music_on_hold_interval'] ?? null,
                     'music_on_hold_timer_name' => $validated['music_on_hold_timer_name'] ?? 'soft',
-                    'music_on_hold_chime_list' => $validated['music_on_hold_chime_list'] ?? null,
+                    'music_on_hold_chime_list' => $chimeList,
                     'music_on_hold_chime_freq' => $validated['music_on_hold_chime_freq'] ?? null,
                     'music_on_hold_chime_max' => $validated['music_on_hold_chime_max'] ?? null,
                     $isNew ? 'insert_date' : 'update_date' => now(),

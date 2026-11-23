@@ -86,10 +86,11 @@
 --Resolve only public calls. Internal transfers keep their called number.
 	local inbound_destination
 	local selected_number
+	local selected_routes
 	local hostname = trim(api:execute("hostname", ""));
 	if context_name == 'public' then
 		inbound_destination = require "resources.functions.inbound_destination";
-		selected_number = inbound_destination.resolve(dbh, cache, api, call_context,
+		selected_number, selected_routes = inbound_destination.resolve(dbh, cache, api, call_context,
 			dialplan_mode, hostname, sip_req_user, sip_to_user, destination_number, expire["dialplan"]);
 		destination_number = selected_number;
 	end
@@ -134,56 +135,20 @@
 
 		--get the dialplan xml
 			if (context_name == 'public' and dialplan_mode == 'single') then
-				sql = "SELECT (SELECT domain_name FROM v_domains WHERE domain_uuid = p.domain_uuid) as domain_name, "
-				sql = sql .. "(SELECT domain_enabled FROM v_domains WHERE domain_uuid = p.domain_uuid) as domain_enabled, p.dialplan_xml ";
-				sql = sql .. "FROM v_dialplans AS p ";
-				sql = sql .. "WHERE ( ";
-				sql = sql .. "	p.dialplan_uuid IN ( ";
-				sql = sql .. "\t\tSELECT dialplan_uuid FROM v_destinations AS d ";
-				sql = sql .. "\t\tWHERE " .. inbound_destination.number_match_sql("d");
-				sql = sql .. "	) ";
-				sql = sql .. "	or (p.dialplan_context like '%public%' and p.domain_uuid IS NULL) ";
-				sql = sql .. ") ";
-				sql = sql .. "AND (p.hostname = :hostname OR p.hostname IS NULL) ";
-				sql = sql .. "AND p.dialplan_enabled = 'true' ";
-				sql = sql .. "ORDER BY p.dialplan_order ASC ";
-				local params = {destination_number = destination_number, hostname = hostname};
+				local params = {hostname = hostname};
+				sql = inbound_destination.single_dialplan_sql(selected_routes, params);
 				if (debug["sql"]) then
 					freeswitch.consoleLog("notice", "[dialplan] SQL: " .. sql .. "; params:" .. json.encode(params) .. "\n");
 				end
-				dbh:query(sql, params, function(row)
-					if (row.domain_uuid ~= nil) then
-						domain_name = row.domain_name;
-					else
-						xml:append(row.dialplan_xml);
-					end
-					if (row.domain_enabled == true) then
-						xml:append(row.dialplan_xml);
-					end
+				local ok, query_error = dbh:query(sql, params, function(row)
+					xml:append(row.dialplan_xml);
 				end);
-				if (xml == nil) then
-					--sanitize the destination if not numeric	
-					if (type(destination_number) == "string") then
-						destination_number = destination_number:gsub("^%+", "");
-						destination_number = tonumber(destination_number);
-						if (type(tonumber(destination_number)) ~= "number") then
-							destination_number = 'not numeric';
-						end
-					end
-					if (type(destination_number) == "numeric") then
-						destination_number = tostring(destination_number);
-					end
-					
-					--build 404 not found XML
-					xml:append([[		<extension name="not-found" continue="false" uuid="9913df49-0757-414b-8cf9-bcae2fd81ae7">]]);
-					xml:append([[			<condition field="" expression="">]]);
-					xml:append([[				<action application="set" data="call_direction=inbound" inline="true"/>]]);
-					xml:append([[				<action application="log" data="WARNING [inbound routes] 404 not found ${sip_network_ip} ]]..destination_number..[[" inline="true"/>]]);
-					xml:append([[			</condition>]]);
-					xml:append([[		</extension>]]);
-				end
+				assert(ok, query_error);
 			else
-				sql = "select dialplan_xml from v_dialplans as p ";
+				sql = "select p.dialplan_xml from v_dialplans as p ";
+				if context_name == 'public' then
+					sql = sql .. "left join v_domains as account on account.domain_uuid = p.domain_uuid ";
+				end
 				if (context_name == "public" or string.match(context_name, "@")) then
 					sql = sql .. "where p.dialplan_context = :call_context ";
 				else
@@ -191,14 +156,18 @@
 				end
 				sql = sql .. "and (p.hostname = :hostname or p.hostname is null) ";
 				sql = sql .. "and p.dialplan_enabled = 'true' ";
+				if context_name == 'public' then
+					sql = sql .. "and (p.domain_uuid is null or account.domain_enabled = 'true') ";
+				end
 				sql = sql .. "order by p.dialplan_order asc ";
 				local params = {call_context = call_context, hostname = hostname};
 				if (debug["sql"]) then
 					freeswitch.consoleLog("notice", "[dialplan] SQL: " .. sql .. "; params:" .. json.encode(params) .. "\n");
 				end
-				dbh:query(sql, params, function(row)
+				local ok, query_error = dbh:query(sql, params, function(row)
 					xml:append(row.dialplan_xml);
 				end);
+				assert(ok, query_error);
 			end
 
 		--set the xml array and then concatenate the array to a string

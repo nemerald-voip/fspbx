@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Destinations;
 use libphonenumber\NumberParseException;
+use libphonenumber\PhoneNumber;
 use libphonenumber\PhoneNumberFormat;
 use libphonenumber\PhoneNumberUtil;
 use libphonenumber\ValidationResult;
@@ -119,6 +120,43 @@ class PhoneNumberService
         ];
     }
 
+    /** Match the configured DID using the same country metadata as number normalization. */
+    public function dialplanMatchForDestination(Destinations $destination): array
+    {
+        $did = $this->originalDid($destination);
+        if ($did !== null) {
+            $number = PhoneNumberUtil::getInstance()->parse($did);
+
+            // originalDid already checks possible numbers in the target account.
+            // Retain an explicitly configured trunk prefix alongside metadata forms.
+            return $this->phoneNumberMatch($number, true, trim((string) $destination->destination_trunk_prefix));
+        }
+
+        // Retain explicit routing patterns and short identifiers. Only the
+        // simple digit-mask syntax expands N/X/Z; raw regexes stay intact.
+        $number = trim((string) $destination->destination_area_code)
+            . trim((string) $destination->destination_number);
+        $body = preg_match('/^[0-9NXZ]+$/iD', $number)
+            ? str_ireplace(['N', 'X', 'Z'], ['[2-9]', '[0-9]', '[1-9]'], $number)
+            : $number;
+        if (str_starts_with($body, '^') && str_ends_with($body, '$')) {
+            $expression = $body;
+        } else {
+            $prefixes = [];
+            $prefix = ltrim(trim((string) $destination->destination_prefix), '+');
+            $trunk = trim((string) $destination->destination_trunk_prefix);
+            if ($prefix !== '') {
+                $prefixes[] = '\\+?(?:'.$prefix.')?';
+            }
+            if ($trunk !== '') {
+                $prefixes[] = '(?:'.$trunk.')?';
+            }
+            $expression = '^'.($prefixes ? '(?:'.implode('|', $prefixes).')' : '').'('.$body.')$';
+        }
+
+        return ['canonical' => $number, 'expression' => $expression, 'is_phone_number' => false];
+    }
+
     public function isValidForDomain(string $value, ?string $domainUuid = null): bool
     {
         // Do not interpret dialplan patterns or vanity strings as phone numbers.
@@ -182,7 +220,14 @@ class PhoneNumberService
             return $exact;
         }
 
+        return $this->phoneNumberMatch($number);
+    }
+
+    private function phoneNumberMatch(PhoneNumber $number, bool $captureNationalNumber = false, string $trunk = ''): array
+    {
+        $phoneNumbers = PhoneNumberUtil::getInstance();
         $e164 = $phoneNumbers->format($number, PhoneNumberFormat::E164);
+        $significant = $phoneNumbers->getNationalSignificantNumber($number);
         $nationalDigits = preg_replace(
             '/\D+/',
             '',
@@ -193,15 +238,28 @@ class PhoneNumberService
             $e164,
             ltrim($e164, '+'),
             $nationalDigits,
-            $phoneNumbers->getNationalSignificantNumber($number),
+            $significant,
+            $trunk !== '' ? $trunk.$significant : null,
         ], fn (?string $variant) => $variant !== null && $variant !== '')));
+
+        $expressions = array_map(function (string $variant) use ($captureNationalNumber, $significant) {
+            if (! $captureNationalNumber) {
+                return preg_quote($variant, '/');
+            }
+            // Keep $1 as the significant number for existing routing actions.
+            // Some newly supported national forms (e.g. Argentine mobiles)
+            // insert digits inside the number; capture that national form.
+            if (str_ends_with($variant, $significant)) {
+                return preg_quote(substr($variant, 0, -strlen($significant)), '/')
+                    .'('.preg_quote($significant, '/').')';
+            }
+            return '('.preg_quote($variant, '/').')';
+        }, $variants);
 
         return [
             'canonical' => $e164,
-            'expression' => '^(?:' . implode('|', array_map(
-                fn (string $variant) => preg_quote($variant, '/'),
-                $variants
-            )) . ')$',
+            // Branch reset keeps capture numbering stable across carrier formats.
+            'expression' => ($captureNationalNumber ? '^(?|' : '^(?:').implode('|', $expressions).')$',
             'is_phone_number' => true,
         ];
     }

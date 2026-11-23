@@ -35,6 +35,7 @@ fs_prepare_compiler_cache
 export PKG_CONFIG_PATH="/usr/local/lib/pkgconfig:/usr/local/lib/$(gcc -dumpmachine)/pkgconfig:${PKG_CONFIG_PATH:-}"
 
 fs_clone https://github.com/nemerald-voip/freeswitch.git "$FREESWITCH_VERSION" "$BUILD_DIR/freeswitch"
+fs_check_source_version "$BUILD_DIR/freeswitch"
 CONFIG_SOURCE="$FS_CONF_DIR"
 if [[ "$FRESH_INSTALL" == true ]]; then
     CONFIG_SOURCE="$BUILD_DIR/default-config"

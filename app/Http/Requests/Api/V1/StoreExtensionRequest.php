@@ -24,6 +24,7 @@ class StoreExtensionRequest extends FormRequest
             'extension' => ['required', 'numeric', new UniqueExtension(null, (string) $this->route('domain_uuid')),],
 
             'directory_first_name' => ['required', 'string', 'max:60'],
+            'voicemail_enabled' => ['required', 'boolean'],
             'directory_last_name'  => ['nullable', 'string', 'max:60'],
 
             'voicemail_mail_to' => ['nullable', 'email', 'max:255'],
@@ -68,8 +69,6 @@ class StoreExtensionRequest extends FormRequest
             'emergency_caller_id_name'    => ['nullable', 'string'],
 
             // Voicemail fields
-            'voicemail_enabled' => ['required', 'boolean'],
-
             'voicemail_id' => ['sometimes'],
 
             'voicemail_file' => ['nullable', Rule::in(['attach', 'link', ''])],
@@ -81,6 +80,7 @@ class StoreExtensionRequest extends FormRequest
             'voicemail_password'                 => ['nullable', 'numeric'],
             'voicemail_tutorial'                 => ['sometimes', 'boolean'],
             'voicemail_recording_instructions'   => ['sometimes', 'boolean'],
+            'user_context' => ['sometimes', 'filled', 'string', 'max:255'],
         ];
     }
 
@@ -123,6 +123,10 @@ class StoreExtensionRequest extends FormRequest
             'directory_first_name' => [
                 'description' => 'First name for directory display.',
                 'example' => 'Front',
+            ],
+            'voicemail_enabled' => [
+                'description' => 'Set to true to create a mailbox for this extension, or false to skip it.',
+                'example' => 'true',
             ],
             'directory_last_name' => [
                 'description' => 'Last name for directory display.',
@@ -260,10 +264,6 @@ class StoreExtensionRequest extends FormRequest
             ],
 
             // --- Voicemail ---
-            'voicemail_enabled' => [
-                'description' => 'Whether voicemail should be created/enabled. If true, a voicemail box will be created. If false, no voicemail box is created.',
-                'example' => 'true',
-            ],
             'voicemail_password' => [
                 'description' => 'Voicemail PIN/password. If omitted, defaults to the extension number unless password complexity is enabled (then a random PIN is generated).',
                 'example' => '1001',
@@ -300,6 +300,10 @@ class StoreExtensionRequest extends FormRequest
             'voicemail_description' => [
                 'description' => 'Optional voicemail description/label.',
                 'example' => 'Front Desk Voicemail',
+            ],
+            'user_context' => [
+                'description' => 'Defaults to the account’s domain name for normal call routing. Set to `public` to apply inbound routes to calls from this extension. Setting this field requires the `extension_user_context` permission.',
+                'example' => 'public',
             ],
         ];
     }

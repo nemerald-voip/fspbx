@@ -944,13 +944,23 @@ if (!function_exists('get_local_date_time_formats')) {
         }
 
         return Cache::remember("{$domain_uuid}_dateTimeFormats", 86400, function () use ($domain_uuid) {
-            $date = strtolower(trim((string) get_domain_setting('date_format', $domain_uuid)));
-            $time = strtolower(trim((string) get_domain_setting('time_format', $domain_uuid)));
+            $keys = array_keys(DateTimeNotation::DEFAULTS);
+            $defaults = DefaultSettings::query()
+                ->where('default_setting_category', 'domain')
+                ->where('default_setting_name', 'text')
+                ->whereIn('default_setting_subcategory', $keys)
+                ->whereIn('default_setting_enabled', ['true', '1'])
+                ->pluck('default_setting_value', 'default_setting_subcategory');
+            $overrides = $domain_uuid ? DomainSettings::query()
+                ->where('domain_uuid', $domain_uuid)
+                ->where('domain_setting_category', 'domain')
+                ->where('domain_setting_name', 'text')
+                ->whereIn('domain_setting_subcategory', $keys)
+                ->whereIn('domain_setting_enabled', ['true', '1'])
+                ->pluck('domain_setting_value', 'domain_setting_subcategory') : collect();
 
-            return [
-                'date_format' => in_array($date, ['us', 'eu', 'iso'], true) ? $date : 'us',
-                'time_format' => $time === '24h' ? '24h' : '12h',
-            ];
+            return collect(DateTimeNotation::DEFAULTS)->merge($defaults)->merge($overrides)
+                ->map(fn ($value, $key) => DateTimeNotation::normalize($key, $value))->all();
         });
     }
 }

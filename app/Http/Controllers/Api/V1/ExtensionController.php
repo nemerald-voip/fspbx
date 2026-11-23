@@ -12,6 +12,11 @@ use Illuminate\Http\Request;
 use App\Jobs\UpdateAppSettings;
 use App\Exceptions\ApiException;
 use App\Data\Api\V1\ExtensionData;
+use App\Data\Api\V1\ExtensionSipCredentialsData;
+use App\Services\ExtensionPasswordService;
+use App\Services\Auth\PermissionService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -509,13 +514,149 @@ class ExtensionController extends Controller
 
 
     /**
+     * Retrieve SIP credentials
+     *
+     * Returns the extension's current SIP username, password, and domain.
+     *
+     * Access rules:
+     * - Caller must have access to the target domain.
+     * - Caller must have both `extension_view` and `extension_password` permissions.
+     * - The extension must belong to the domain in the URL.
+     *
+     * Treat the response as a secret. Use HTTPS and do not log or cache it.
+     * Responses include `Cache-Control: no-store, private`.
+     *
+     * @group Extensions
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     * @urlParam extension_uuid string required The extension UUID. Example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+     *
+     * @response 200 scenario="Success" {"extension_uuid":"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b","object":"extension_sip_credentials","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","extension":"1001","password":"example-only-sip-password","domain":"pbx.example.com"}
+     * @response 400 scenario="Invalid UUID" {"error":{"type":"invalid_request_error","message":"Invalid extension UUID.","code":"invalid_request","param":"extension_uuid"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
+     * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"extension_password"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Extension not found in domain" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension_uuid"}}
+     *
+     * @responseField extension string SIP username (extension number).
+     * @responseField password string Current SIP password. Sensitive; never log or cache this value.
+     * @responseField domain string Routing context shown as Domain in the portal. If the value is `public`, use the account’s domain name for SIP registration.
+     */
+    public function sipCredentials(Request $request, string $domain_uuid, string $extension_uuid): JsonResponse
+    {
+        return $this->sipCredentialsResponse($this->findSipCredentialsExtension($request, $domain_uuid, $extension_uuid));
+    }
+
+    /**
+     * Regenerate SIP credentials
+     *
+     * Generates and saves a new SIP password, then returns the updated credentials.
+     * The SIP username and domain stay the same. No request body is required;
+     * callers cannot choose the password or override the domain or extension in the URL.
+     *
+     * Access rules:
+     * - Caller must have access to the target domain.
+     * - Caller must have both `extension_edit` and `extension_password` permissions.
+     * - The extension must belong to the domain in the URL.
+     *
+     * Reprovision phones linked to this extension so they receive the new password.
+     * Update manually configured phones with the password in the response.
+     * Linked Ringotel users receive the update through background synchronization.
+     * Avoid automatic retries because each successful request generates a new password.
+     * Treat the response as a secret. Use HTTPS and do not log or cache it.
+     * Responses include `Cache-Control: no-store, private`.
+     *
+     * @group Extensions
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     * @urlParam extension_uuid string required The extension UUID. Example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+     *
+     * @response 200 scenario="Success" {"extension_uuid":"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b","object":"extension_sip_credentials","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","extension":"1001","password":"example-only-new-sip-password","domain":"pbx.example.com"}
+     * @response 400 scenario="Invalid UUID" {"error":{"type":"invalid_request_error","message":"Invalid extension UUID.","code":"invalid_request","param":"extension_uuid"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 403 scenario="Forbidden (domain access)" {"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}}
+     * @response 403 scenario="Forbidden (missing permission)" {"success":false,"message":"Forbidden (missing permission).","error":{"code":"forbidden_permission","permission":"extension_password"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Extension not found in domain" {"error":{"type":"invalid_request_error","message":"Extension not found.","code":"resource_missing","param":"extension_uuid"}}
+     * @response 500 scenario="Reset failed" {"error":{"type":"api_error","message":"Unable to regenerate SIP credentials.","code":"internal_error","param":null}}
+     *
+     * @responseField extension string SIP username (extension number).
+     * @responseField password string Newly generated SIP password. Sensitive; never log or cache this value.
+     * @responseField domain string Routing context shown as Domain in the portal. If the value is `public`, use the account’s domain name for SIP registration.
+     */
+    public function regenerateSipCredentials(Request $request, string $domain_uuid, string $extension_uuid): JsonResponse
+    {
+        $extension = $this->findSipCredentialsExtension($request, $domain_uuid, $extension_uuid);
+
+        try {
+            app(ExtensionPasswordService::class)->update($extension, generate_sip_password());
+        } catch (\Throwable $e) {
+            // Database/queue exceptions can contain passwords in their bindings or payloads.
+            logger()->error('API SIP password reset failed.', [
+                'domain_uuid' => $domain_uuid,
+                'extension_uuid' => $extension_uuid,
+                'exception_class' => get_class($e),
+            ]);
+            throw new ApiException(500, 'api_error', 'Unable to regenerate SIP credentials.', 'internal_error');
+        }
+
+        return $this->sipCredentialsResponse($extension);
+    }
+
+    private function findSipCredentialsExtension(Request $request, string $domainUuid, string $extensionUuid): Extensions
+    {
+        if (! $request->user()) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
+        }
+        if (! Str::isUuid($domainUuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid domain UUID.', 'invalid_request', 'domain_uuid');
+        }
+        if (! Str::isUuid($extensionUuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid extension UUID.', 'invalid_request', 'extension_uuid');
+        }
+        if (! Domain::query()->where('domain_uuid', $domainUuid)->exists()) {
+            throw new ApiException(404, 'invalid_request_error', 'Domain not found.', 'resource_missing', 'domain_uuid');
+        }
+
+        $extension = Extensions::without('advSettings')
+            ->where('domain_uuid', $domainUuid)
+            ->where('extension_uuid', $extensionUuid)
+            ->first();
+
+        if (! $extension) {
+            throw new ApiException(404, 'invalid_request_error', 'Extension not found.', 'resource_missing', 'extension_uuid');
+        }
+
+        return $extension;
+    }
+
+    private function sipCredentialsResponse(Extensions $extension): JsonResponse
+    {
+        $payload = new ExtensionSipCredentialsData(
+            extension_uuid: (string) $extension->extension_uuid,
+            object: 'extension_sip_credentials',
+            domain_uuid: (string) $extension->domain_uuid,
+            extension: (string) $extension->extension,
+            password: $extension->password,
+            domain: $extension->user_context,
+        );
+
+        return response()->json($payload->toArray(), 200, [
+            'Cache-Control' => 'no-store, private',
+            'Pragma' => 'no-cache',
+        ]);
+    }
+
+    /**
      * Create an extension
      *
-     * Creates a new extension in the specified domain.
+     * Create an extension in the selected account. Provide the extension number,
+     * the first name to display in the directory, and whether to create a voicemail box.
      *
-     * Notes:
-     * - Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.
-     * - Returns the created extension object.
+     * Requires access to the account and the `extension_add` permission.
      *
      * @group Extensions
      * @authenticated
@@ -575,6 +716,9 @@ class ExtensionController extends Controller
      *     "param": "domain_uuid"
      *   }
      * }
+     *
+     * @response 400 scenario="Unsupported dialplan context" {"error":{"type":"invalid_request_error","message":"Use public or the target account domain name for user_context.","code":"invalid_parameter","param":"user_context"}}
+     * @response 403 scenario="Missing context permission" {"error":{"type":"invalid_request_error","message":"Setting user_context requires the extension_user_context permission.","code":"forbidden_permission","param":"user_context"}}
      */
 
     public function store(StoreExtensionRequest $request, string $domain_uuid)
@@ -634,6 +778,9 @@ class ExtensionController extends Controller
         };
 
         $validated = $request->validated();
+        if (isset($validated['user_context'])) {
+            $this->checkUserContext($request, $domain, $validated['user_context']);
+        }
 
         // --- Controller-only computed defaults (NOT documented) ---
         $first = (string) ($validated['directory_first_name'] ?? '');
@@ -655,7 +802,6 @@ class ExtensionController extends Controller
             // required scoping
             'domain_uuid'  => (string) $domain->domain_uuid,
 
-            // keep internal-only fields out of docs
             'password'     => function_exists('generate_sip_password') ? generate_sip_password() : bin2hex(random_bytes(12)),
             'user_context' => $validated['user_context'] ?? (string) $domain->domain_name,
             'accountcode'  => $validated['accountcode']  ?? (string) $domain->domain_name,
@@ -820,18 +966,11 @@ class ExtensionController extends Controller
     /**
      * Update an extension
      *
-     * Updates an existing extension in the specified domain.
+     * Send the settings you want to change for an extension in the selected account.
+     * For example, set `voicemail_enabled` to `true` to enable its mailbox or
+     * `false` to disable it.
      *
-     * Access rules:
-     * - Caller must have access to the target domain (domain scope).
-     * - Caller must have the `extension_edit` permission.
-     *
-     * Notes:
-     * - Fields are optional. If a field is omitted, the current value is unchanged.
-     * - Voicemail behavior:
-     *   - If `voicemail_enabled` is omitted, voicemail settings are unchanged.
-     *   - If `voicemail_enabled` is true, a voicemail box is created (or updated) for this extension.
-     *   - If `voicemail_enabled` is false, voicemail is disabled for this extension.
+     * Requires access to the account and the `extension_edit` permission.
      *
      * @group Extensions
      * @authenticated
@@ -892,6 +1031,9 @@ class ExtensionController extends Controller
      *     "param": "extension_uuid"
      *   }
      * }
+     *
+     * @response 400 scenario="Unsupported dialplan context" {"error":{"type":"invalid_request_error","message":"Use public or the target account domain name for user_context.","code":"invalid_parameter","param":"user_context"}}
+     * @response 403 scenario="Missing context permission" {"error":{"type":"invalid_request_error","message":"Setting user_context requires the extension_user_context permission.","code":"forbidden_permission","param":"user_context"}}
      */
 
     public function update(UpdateExtensionRequest $request, string $domain_uuid, string $extension_uuid)
@@ -925,8 +1067,8 @@ class ExtensionController extends Controller
                 'voicemail' => function ($q) use ($domain_uuid) {
                     $q->where('domain_uuid', $domain_uuid);
                 },
-                'mobile_app' => function ($q) {
-                    $q->select([
+                'mobile_app' => function ($q) use ($domain_uuid) {
+                    $q->where('domain_uuid', $domain_uuid)->select([
                         'mobile_app_user_uuid',
                         'extension_uuid',
                         'org_id',
@@ -963,6 +1105,9 @@ class ExtensionController extends Controller
         };
 
         $inputs = $request->validated();
+        if (isset($inputs['user_context'])) {
+            $this->checkUserContext($request, $domain, $inputs['user_context']);
+        }
 
         // Keep old values for cache flush (and voicemail lookup fallback)
         $oldExtNumber = (string) $extension->extension;
@@ -1334,6 +1479,17 @@ class ExtensionController extends Controller
         }
     }
 
+
+    private function checkUserContext(Request $request, Domain $domain, string $context): void
+    {
+        if (! app(PermissionService::class)->userHasPermission($request->user(), 'extension_user_context', $domain->domain_uuid)) {
+            throw new ApiException(403, 'invalid_request_error', 'Setting user_context requires the extension_user_context permission.', 'forbidden_permission', 'user_context');
+        }
+
+        if (! in_array($context, ['public', $domain->domain_name], true)) {
+            throw new ApiException(400, 'invalid_request_error', 'Use public or the target account domain name for user_context.', 'invalid_parameter', 'user_context');
+        }
+    }
 
     /**
      * Delete an extension

@@ -20,6 +20,16 @@ class AssemblyAiService implements TranscriptionProviderInterface
     {
         $this->payload = ['audio_url' => $audioUrl] + $this->pruneNulls($this->merge($this->options, $options));
 
+        // Keep previously saved configurations and per-call overrides valid for AssemblyAI.
+        // An explicit language takes precedence over automatic detection.
+        if (filled($this->payload['language_code'] ?? null)) {
+            unset(
+                $this->payload['language_detection'],
+                $this->payload['language_confidence_threshold'],
+                $this->payload['language_detection_options']
+            );
+        }
+
         // add webhook info
         $this->payload['webhook_url']              = route('webhook-client-assemblyai'); // public URL
         $this->payload['webhook_auth_header_name'] = config('services.assemblyai.webhook_header_name');

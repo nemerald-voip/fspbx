@@ -4,6 +4,7 @@ namespace App\Services\Settings;
 
 use App\Models\DefaultSettings;
 use App\Services\MenuSelectionService;
+use App\Support\Localization\DateTimeNotation;
 use App\Support\Localization\LocaleRegistry;
 
 /**
@@ -47,6 +48,7 @@ class SystemSettingsSchema extends SettingsSchema
                 'searchable' => true,
                 'info' => __('The default display language for accounts that have not set their own. Only languages that are translated enough to use are listed.'),
             ],
+            ...$this->dateTimeFields(account: false),
             [
                 'key' => 'menu',
                 'category' => 'domain',
@@ -110,7 +112,14 @@ class SystemSettingsSchema extends SettingsSchema
 
         $values = [];
         foreach ($this->fields() as $field) {
-            $values[$field['key']] = $rows->get($field['key'])?->default_setting_value;
+            $row = $rows->get($field['key']);
+            $value = $row?->default_setting_value;
+            if (isset($field['fallback'])) {
+                $value = filter_var($row?->default_setting_enabled, FILTER_VALIDATE_BOOLEAN)
+                    ? DateTimeNotation::normalize($field['key'], $value)
+                    : $field['fallback'];
+            }
+            $values[$field['key']] = $value;
         }
         $values['menu'] = app(MenuSelectionService::class)->systemDefault()?->menu_uuid;
 

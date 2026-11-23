@@ -24,7 +24,9 @@ class StoreMusicOnHoldRequest extends FormRequest
             'music_on_hold_channels' => ['required', Rule::in(['1', '2'])],
             'music_on_hold_interval' => ['nullable', 'integer', 'min:0'],
             'music_on_hold_timer_name' => ['nullable', 'string', 'max:255'],
-            'music_on_hold_chime_list' => ['nullable', 'string', 'max:1024'],
+            // mod_local_stream accepts up to 100 comma-separated paths.
+            'music_on_hold_chime_list' => ['nullable', 'array', 'max:100'],
+            'music_on_hold_chime_list.*' => ['bail', 'required', 'string', 'max:1024', 'not_regex:/,/'],
             'music_on_hold_chime_freq' => ['nullable', 'integer', 'min:0'],
             'music_on_hold_chime_max' => ['nullable', 'integer', 'min:0'],
         ];
@@ -32,6 +34,12 @@ class StoreMusicOnHoldRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $chimes = $this->input('music_on_hold_chime_list');
+        if (is_string($chimes)) {
+            // Older clients submit the stored comma-separated string.
+            $chimes = preg_split('/\s*,\s*/', trim($chimes), -1, PREG_SPLIT_NO_EMPTY);
+        }
+
         $this->merge([
             'domain_uuid' => userCheckPermission('music_on_hold_domain')
                 ? $this->blankToNull($this->input('domain_uuid'))
@@ -42,7 +50,7 @@ class StoreMusicOnHoldRequest extends FormRequest
             'music_on_hold_channels' => (string) $this->input('music_on_hold_channels', '1'),
             'music_on_hold_interval' => $this->blankToNull($this->input('music_on_hold_interval')),
             'music_on_hold_timer_name' => $this->blankToNull($this->input('music_on_hold_timer_name')) ?? 'soft',
-            'music_on_hold_chime_list' => $this->blankToNull($this->input('music_on_hold_chime_list')),
+            'music_on_hold_chime_list' => $chimes,
             'music_on_hold_chime_freq' => $this->blankToNull($this->input('music_on_hold_chime_freq')),
             'music_on_hold_chime_max' => $this->blankToNull($this->input('music_on_hold_chime_max')),
         ]);
@@ -61,7 +69,9 @@ class StoreMusicOnHoldRequest extends FormRequest
 
     public function messages(): array
     {
-        return ValidationMessages::common();
+        return ValidationMessages::common() + [
+            'music_on_hold_chime_list.*.not_regex' => __('Chime filenames cannot contain commas.'),
+        ];
     }
 
     public function attributes(): array
@@ -75,7 +85,8 @@ class StoreMusicOnHoldRequest extends FormRequest
             'music_on_hold_channels' => __('Channels'),
             'music_on_hold_interval' => __('Interval'),
             'music_on_hold_timer_name' => __('Timer Name'),
-            'music_on_hold_chime_list' => __('Chime'),
+            'music_on_hold_chime_list' => __('Chimes'),
+            'music_on_hold_chime_list.*' => __('Chime'),
             'music_on_hold_chime_freq' => __('Chime Frequency'),
             'music_on_hold_chime_max' => __('Chime Maximum'),
         ];

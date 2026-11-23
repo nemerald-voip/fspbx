@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "2f830185-b2c8-48d2-8cd8-2dd69c1f291e",
+        "_postman_id": "4d82d27a-8e89-4569-bb43-e69d2eddf6f9",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -853,7 +853,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template\":\"Yealink T46U\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_description\":\"Reception desk device\"}"
+                            "raw": "{\"device_address\":\"0004f23a5bc7\",\"serial_number\":\"8603123456789\",\"device_profile_uuid\":\"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\"device_template_uuid\":\"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\"device_template\":\"Yealink T46U\",\"device_description\":\"Reception desk device\"}"
                         },
                         "description": "Updates an existing device in the specified domain.\n\nNotes:\n- Only provided fields are updated.\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
                     },
@@ -1550,6 +1550,176 @@
                     ]
                 },
                 {
+                    "name": "Retrieve SIP credentials",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/extensions\/:extension_uuid\/sip-credentials",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/extensions\/:extension_uuid\/sip-credentials",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "extension_uuid",
+                                    "key": "extension_uuid",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "The extension UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns the extension's current SIP username, password, and domain.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have both `extension_view` and `extension_password` permissions.\n- The extension must belong to the domain in the URL.\n\nTreat the response as a secret. Use HTTPS and do not log or cache it.\nResponses include `Cache-Control: no-store, private`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"extension_uuid\":\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\"object\":\"extension_sip_credentials\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"extension\":\"1001\",\"password\":\"example-only-sip-password\",\"domain\":\"pbx.example.com\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid extension UUID.\",\"code\":\"invalid_request\",\"param\":\"extension_uuid\"}}",
+                            "name": "Invalid UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"extension_password\"}}",
+                            "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension_uuid\"}}",
+                            "name": "Extension not found in domain"
+                        }
+                    ]
+                },
+                {
+                    "name": "Regenerate SIP credentials",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/extensions\/:extension_uuid\/regenerate-sip-credentials",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/extensions\/:extension_uuid\/regenerate-sip-credentials",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "extension_uuid",
+                                    "key": "extension_uuid",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "The extension UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Generates and saves a new SIP password, then returns the updated credentials.\nThe SIP username and domain stay the same. No request body is required;\ncallers cannot choose the password or override the domain or extension in the URL.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have both `extension_edit` and `extension_password` permissions.\n- The extension must belong to the domain in the URL.\n\nReprovision phones linked to this extension so they receive the new password.\nUpdate manually configured phones with the password in the response.\nLinked Ringotel users receive the update through background synchronization.\nAvoid automatic retries because each successful request generates a new password.\nTreat the response as a secret. Use HTTPS and do not log or cache it.\nResponses include `Cache-Control: no-store, private`."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"extension_uuid\":\"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\"object\":\"extension_sip_credentials\",\"domain_uuid\":\"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\"extension\":\"1001\",\"password\":\"example-only-new-sip-password\",\"domain\":\"pbx.example.com\"}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid extension UUID.\",\"code\":\"invalid_request\",\"param\":\"extension_uuid\"}}",
+                            "name": "Invalid UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"success\":false,\"message\":\"Forbidden (missing permission).\",\"error\":{\"code\":\"forbidden_permission\",\"permission\":\"extension_password\"}}",
+                            "name": "Forbidden (missing permission)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Extension not found.\",\"code\":\"resource_missing\",\"param\":\"extension_uuid\"}}",
+                            "name": "Extension not found in domain"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Unable to regenerate SIP credentials.\",\"code\":\"internal_error\",\"param\":null}}",
+                            "name": "Reset failed"
+                        }
+                    ]
+                },
+                {
                     "name": "Create an extension",
                     "request": {
                         "url": {
@@ -1579,9 +1749,9 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"extension\":1001,\"directory_first_name\":\"Front\",\"directory_last_name\":\"Desk\",\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"description\":\"Main reception phone\",\"suspended\":false,\"do_not_disturb\":false,\"enabled\":true,\"call_timeout\":\"25\",\"directory_visible\":true,\"directory_exten_visible\":true,\"user_record\":true,\"call_screen_enabled\":false,\"max_registrations\":\"1\",\"limit_max\":\"5\",\"limit_destination\":\"!USER_BUSY\",\"toll_allow\":\"domestic\",\"call_group\":\"sales\",\"hold_music\":\"local_stream:\\\/\\\/default\",\"cidr\":\"192.168.1.0\\\/24\",\"sip_force_contact\":\"NDLB-connectile-dysfunction\",\"sip_force_expires\":\"300\",\"sip_bypass_media\":\"false\",\"mwi_account\":\"1001@your-domain.com\",\"absolute_codec_string\":\"PCMU,PCMA,OPUS\",\"dial_string\":\"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",\"force_ping\":\"true\",\"auth_acl\":\"localnet\",\"outbound_caller_id_number\":\"+12135551212\",\"emergency_caller_id_number\":\"+12135559876\",\"outbound_caller_id_name\":\"Front Desk\",\"emergency_caller_id_name\":\"Front Desk\",\"voicemail_enabled\":true,\"voicemail_file\":\"link\",\"voicemail_local_after_email\":true,\"voicemail_transcription_enabled\":true,\"voicemail_description\":\"Front Desk Voicemail\",\"voicemail_password\":1001,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true}"
+                            "raw": "{\"extension\":1001,\"directory_first_name\":\"Front\",\"voicemail_enabled\":true,\"directory_last_name\":\"Desk\",\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"description\":\"Main reception phone\",\"suspended\":false,\"do_not_disturb\":false,\"enabled\":true,\"call_timeout\":\"25\",\"directory_visible\":true,\"directory_exten_visible\":true,\"user_record\":true,\"call_screen_enabled\":false,\"max_registrations\":\"1\",\"limit_max\":\"5\",\"limit_destination\":\"!USER_BUSY\",\"toll_allow\":\"domestic\",\"call_group\":\"sales\",\"hold_music\":\"local_stream:\\\/\\\/default\",\"cidr\":\"192.168.1.0\\\/24\",\"sip_force_contact\":\"NDLB-connectile-dysfunction\",\"sip_force_expires\":\"300\",\"sip_bypass_media\":\"false\",\"mwi_account\":\"1001@your-domain.com\",\"absolute_codec_string\":\"PCMU,PCMA,OPUS\",\"dial_string\":\"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",\"force_ping\":\"true\",\"auth_acl\":\"localnet\",\"outbound_caller_id_number\":\"+12135551212\",\"emergency_caller_id_number\":\"+12135559876\",\"outbound_caller_id_name\":\"Front Desk\",\"emergency_caller_id_name\":\"Front Desk\",\"voicemail_file\":\"link\",\"voicemail_local_after_email\":true,\"voicemail_transcription_enabled\":true,\"voicemail_description\":\"Front Desk Voicemail\",\"voicemail_password\":1001,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true,\"user_context\":\"public\"}"
                         },
-                        "description": "Creates a new extension in the specified domain.\n\nNotes:\n- Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.\n- Returns the created extension object."
+                        "description": "Create an extension in the selected account. Provide the extension number,\nthe first name to display in the directory, and whether to create a voicemail box.\n\nRequires access to the account and the `extension_add` permission."
                     },
                     "response": [
                         {
@@ -1598,9 +1768,21 @@
                         },
                         {
                             "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Use public or the target account domain name for user_context.\",\"code\":\"invalid_parameter\",\"param\":\"user_context\"}}",
+                            "name": "Unsupported dialplan context"
+                        },
+                        {
+                            "header": [],
                             "code": 401,
                             "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
                             "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Setting user_context requires the extension_user_context permission.\",\"code\":\"forbidden_permission\",\"param\":\"user_context\"}}",
+                            "name": "Missing context permission"
                         },
                         {
                             "header": [],
@@ -1646,9 +1828,9 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"extension\":1001,\"directory_first_name\":\"Front\",\"directory_last_name\":\"Desk\",\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"description\":\"Main reception phone\",\"suspended\":false,\"do_not_disturb\":false,\"enabled\":true,\"call_timeout\":\"25\",\"directory_visible\":true,\"directory_exten_visible\":true,\"user_record\":true,\"call_screen_enabled\":false,\"max_registrations\":\"1\",\"limit_max\":\"5\",\"limit_destination\":\"!USER_BUSY\",\"toll_allow\":\"domestic\",\"call_group\":\"sales\",\"hold_music\":\"local_stream:\\\/\\\/default\",\"cidr\":\"192.168.1.0\\\/24\",\"sip_force_contact\":\"NDLB-connectile-dysfunction\",\"sip_force_expires\":\"300\",\"sip_bypass_media\":\"false\",\"mwi_account\":\"1001@your-domain.com\",\"absolute_codec_string\":\"PCMU,PCMA,OPUS\",\"dial_string\":\"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",\"force_ping\":\"true\",\"auth_acl\":\"localnet\",\"outbound_caller_id_number\":\"+12135551212\",\"emergency_caller_id_number\":\"+12135559876\",\"outbound_caller_id_name\":\"Front Desk\",\"emergency_caller_id_name\":\"Front Desk\",\"voicemail_enabled\":true,\"voicemail_file\":\"link\",\"voicemail_local_after_email\":true,\"voicemail_transcription_enabled\":true,\"voicemail_description\":\"Front Desk Voicemail\",\"voicemail_password\":1001,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true}"
+                            "raw": "{\"extension\":1001,\"directory_first_name\":\"Front\",\"directory_last_name\":\"Desk\",\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"description\":\"Main reception phone\",\"suspended\":false,\"do_not_disturb\":false,\"enabled\":true,\"call_timeout\":\"25\",\"directory_visible\":true,\"directory_exten_visible\":true,\"user_record\":true,\"call_screen_enabled\":false,\"max_registrations\":\"1\",\"limit_max\":\"5\",\"limit_destination\":\"!USER_BUSY\",\"toll_allow\":\"domestic\",\"call_group\":\"sales\",\"hold_music\":\"local_stream:\\\/\\\/default\",\"cidr\":\"192.168.1.0\\\/24\",\"sip_force_contact\":\"NDLB-connectile-dysfunction\",\"sip_force_expires\":\"300\",\"sip_bypass_media\":\"false\",\"mwi_account\":\"1001@your-domain.com\",\"absolute_codec_string\":\"PCMU,PCMA,OPUS\",\"dial_string\":\"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",\"force_ping\":\"true\",\"auth_acl\":\"localnet\",\"outbound_caller_id_number\":\"+12135551212\",\"emergency_caller_id_number\":\"+12135559876\",\"outbound_caller_id_name\":\"Front Desk\",\"emergency_caller_id_name\":\"Front Desk\",\"voicemail_enabled\":true,\"voicemail_file\":\"link\",\"voicemail_local_after_email\":true,\"voicemail_transcription_enabled\":true,\"voicemail_description\":\"Front Desk Voicemail\",\"voicemail_password\":1001,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true,\"user_context\":\"public\"}"
                         },
-                        "description": "Updates an existing extension in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_edit` permission.\n\nNotes:\n- Fields are optional. If a field is omitted, the current value is unchanged.\n- Voicemail behavior:\n  - If `voicemail_enabled` is omitted, voicemail settings are unchanged.\n  - If `voicemail_enabled` is true, a voicemail box is created (or updated) for this extension.\n  - If `voicemail_enabled` is false, voicemail is disabled for this extension."
+                        "description": "Send the settings you want to change for an extension in the selected account.\nFor example, set `voicemail_enabled` to `true` to enable its mailbox or\n`false` to disable it.\n\nRequires access to the account and the `extension_edit` permission."
                     },
                     "response": [
                         {
@@ -1656,6 +1838,12 @@
                             "code": 200,
                             "body": "{\n  \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"extension\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"extension\": \"1001\",\n  \"enabled\": true,\n  \"effective_caller_id_name\": \"Front Desk\",\n  \"effective_caller_id_number\": \"1001\",\n  \"outbound_caller_id_number_e164\": \"+12135551212\",\n  \"outbound_caller_id_number_formatted\": null,\n  \"emergency_caller_id_number_e164\": \"+12135559876\",\n  \"directory_first_name\": \"Front\",\n  \"directory_last_name\": \"Desk\",\n  \"name_formatted\": \"Front Desk\",\n  \"directory_visible\": true,\n  \"directory_exten_visible\": true,\n  \"email\": null,\n  \"do_not_disturb\": false,\n  \"user_record\": true,\n  \"suspended\": false,\n  \"description\": \"Main reception phone\",\n  \"forward_all_enabled\": null,\n  \"forward_busy_enabled\": null,\n  \"forward_no_answer_enabled\": null,\n  \"forward_user_not_registered_enabled\": null,\n  \"follow_me_enabled\": null\n}",
                             "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Use public or the target account domain name for user_context.\",\"code\":\"invalid_parameter\",\"param\":\"user_context\"}}",
+                            "name": "Unsupported dialplan context"
                         },
                         {
                             "header": [],
@@ -1668,6 +1856,12 @@
                             "code": 403,
                             "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
                             "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Setting user_context requires the extension_user_context permission.\",\"code\":\"forbidden_permission\",\"param\":\"user_context\"}}",
+                            "name": "Missing context permission"
                         },
                         {
                             "header": [],

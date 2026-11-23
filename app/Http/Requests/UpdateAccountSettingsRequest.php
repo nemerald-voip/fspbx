@@ -133,6 +133,8 @@ class UpdateAccountSettingsRequest extends FormRequest
             'settings' => __('Settings'),
             'settings.*' => __('Setting'),
             'settings.time_zone' => __('Time Zone'),
+            'settings.date_format' => __('Date format'),
+            'settings.time_format' => __('Time format'),
             'settings.language' => __('Language'),
             'settings.menu' => __('Account Menu'),
             'settings.line_display_name_format' => __('Line Display Name'),

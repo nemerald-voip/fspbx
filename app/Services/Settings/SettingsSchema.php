@@ -3,6 +3,7 @@
 namespace App\Services\Settings;
 
 use App\Models\Menu;
+use App\Support\Localization\DateTimeNotation;
 use App\Support\Localization\LocaleRegistry;
 
 /**
@@ -14,6 +15,28 @@ use App\Support\Localization\LocaleRegistry;
  */
 abstract class SettingsSchema
 {
+    protected function dateTimeFields(bool $account): array
+    {
+        $fields = [];
+        foreach (['date_format' => __('Date format'), 'time_format' => __('Time format')] as $key => $label) {
+            $default = DateTimeNotation::DEFAULTS[$key];
+            $fields[] = [
+                'key' => $key,
+                'category' => 'domain',
+                'subcategory' => $key,
+                'name' => 'text',
+                'type' => 'select',
+                'label' => $label,
+                'group' => __('Regional'),
+                'placeholder' => $account ? __('Use system default') : DateTimeNotation::EXAMPLES[$key][$default],
+                'options' => $key,
+                'fallback' => $default,
+            ];
+        }
+
+        return $fields;
+    }
+
     /**
      * The declarative field list for this surface.
      *
@@ -40,6 +63,7 @@ abstract class SettingsSchema
         return [
             'language' => array_keys(app(LocaleRegistry::class)->locales()),
             'menu' => Menu::query()->pluck('menu_uuid')->all(),
+            ...array_map('array_keys', DateTimeNotation::EXAMPLES),
         ];
     }
 
@@ -48,7 +72,7 @@ abstract class SettingsSchema
      * that reference name. $currentLanguage is the value already in effect
      * for this surface so a below-threshold locale still appears.
      *
-     * @return array<string, array<int, mixed>>
+     * @return array<string, array>
      */
     protected function optionLists(string $currentLanguage): array
     {
@@ -56,6 +80,7 @@ abstract class SettingsSchema
             'timezones' => getGroupedTimezones(),
             'locales' => $this->localeOptions($currentLanguage),
             'menus' => $this->menuOptions(),
+            ...DateTimeNotation::EXAMPLES,
         ];
     }
 

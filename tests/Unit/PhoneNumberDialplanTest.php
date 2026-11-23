@@ -10,6 +10,7 @@ use App\Models\Dialplans;
 use App\Services\DialplanBuilderService;
 use App\Services\DialplanService;
 use App\Services\PhoneNumberService;
+use App\Services\PhoneNumberMatchRefreshService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\DB;
@@ -211,6 +212,134 @@ class PhoneNumberDialplanTest extends TestCase
         }
 
         return $groups;
+    }
+
+    /** @dataProvider destinationNumbers */
+    public function test_saved_destination_xml_and_rules_share_the_country_aware_match(
+        string $country, ?string $prefix, string $number, string $canonical, array $accepted, array $rejected
+    ): void {
+        $this->createDestinationsTable();
+        app()->instance(PhoneNumberService::class, new class($country) extends PhoneNumberService {
+            public function __construct(private string $country) {}
+            public function countryCodeForDomain(?string $domainUuid = null): string { return $this->country; }
+        });
+        $destination = Destinations::create([
+            'destination_uuid' => '8c75b703-9419-4ad7-92d8-408d73c34b3e',
+            'domain_uuid' => '7d58342b-2b29-4dcf-92d6-e9a9e002a4e5',
+            'dialplan_uuid' => '28c7b5c6-3bf7-4899-9d07-f9298d065410',
+            'destination_number' => $number, 'destination_prefix' => $prefix,
+            'destination_enabled' => 'true', 'destination_context' => 'public',
+            'destination_actions' => json_encode([['destination_app' => 'transfer', 'destination_data' => '1001 XML account.test']]),
+        ]);
+        $expression = $destination->fresh()->destination_number_regex;
+        $builder = new class extends DialplanBuilderService {
+            public function clearCacheForPhoneNumber(Destinations $phoneNumber): void {}
+        };
+        $builder->buildDialplanForPhoneNumber($destination, 'account.test');
+        $plan = Dialplans::findOrFail($destination->dialplan_uuid);
+        $details = $plan->dialplan_details()->orderBy('dialplan_detail_order')->get();
+        $this->assertSame($expression, $details->first()->dialplan_detail_data);
+        foreach ([$plan->dialplan_xml, app(DialplanService::class)->buildXml($plan, $details->map->getAttributes()->all())] as $xml) {
+            $actual = (string) simplexml_load_string($xml)->condition['expression'];
+            $this->assertSame($expression, $actual);
+            foreach ($accepted as $value) $this->assertSame(1, preg_match('/'.$actual.'/D', $value), $value);
+            foreach ($rejected as $value) $this->assertSame(0, preg_match('/'.$actual.'/D', $value), $value);
+        }
+    }
+
+    public static function destinationNumbers(): array
+    {
+        return require dirname(__DIR__).'/Fixtures/phone_number_matches.php';
+    }
+
+    private function createDestinationsTable(): void
+    {
+        Schema::create('v_destinations', function (Blueprint $table) {
+            $table->uuid('destination_uuid')->primary();
+            foreach (['domain_uuid', 'dialplan_uuid', 'destination_number', 'destination_prefix',
+                'destination_trunk_prefix', 'destination_area_code', 'destination_number_regex',
+                'destination_actions', 'destination_enabled', 'destination_context', 'update_date', 'update_user'] as $column) {
+                $table->text($column)->nullable();
+            }
+        });
+    }
+
+    /** @dataProvider historicalMatches */
+    public function test_refresh_repairs_existing_regex_xml_and_rules_without_rebuilding_actions(
+        string $prefix, ?string $area, ?string $trunk, string $number, string $old, bool $legacyCaptures
+    ): void
+    {
+        $this->createDestinationsTable();
+        $destination = Destinations::create([
+            'destination_uuid' => '8c75b703-9419-4ad7-92d8-408d73c34b3e',
+            'domain_uuid' => '7d58342b-2b29-4dcf-92d6-e9a9e002a4e5',
+            'dialplan_uuid' => '28c7b5c6-3bf7-4899-9d07-f9298d065410',
+            'destination_number' => $number, 'destination_prefix' => $prefix,
+            'destination_area_code' => $area, 'destination_trunk_prefix' => $trunk,
+            'destination_enabled' => 'true', 'destination_context' => 'public',
+            'destination_actions' => json_encode([['destination_app' => 'transfer', 'destination_data' => '1001 XML account.test']]),
+        ]);
+        $builder = new class extends DialplanBuilderService {
+            public function clearCacheForPhoneNumber(Destinations $phoneNumber): void {}
+        };
+        $builder->buildDialplanForPhoneNumber($destination, 'account.test');
+        $new = $destination->destination_number_regex;
+        DB::table('v_destinations')->where('destination_uuid', $destination->getKey())->update(['destination_number_regex' => $old]);
+        $plan = Dialplans::findOrFail($destination->dialplan_uuid);
+        $plan->dialplan_xml = str_replace($new, $old, $plan->dialplan_xml);
+        $plan->save();
+        $plan->dialplan_details()->where('dialplan_detail_data', $new)->update(['dialplan_detail_data' => $old]);
+        // Preserve an administrator-edited action; do not rebuild from the Phone Number settings.
+        $plan->dialplan_xml = str_replace('1001 XML account.test', 'custom-$1 XML account.test', $plan->dialplan_xml);
+        $plan->save();
+        $plan->dialplan_details()->where('dialplan_detail_type', 'transfer')->update(['dialplan_detail_data' => 'custom-$1 XML account.test']);
+        $actions = $this->actionsByCondition($plan->dialplan_xml);
+        $service = app(PhoneNumberMatchRefreshService::class);
+
+        if ($legacyCaptures) {
+            try {
+                $service->refresh($destination->getKey(), true);
+                $this->fail('An action using legacy capture groups was changed.');
+            } catch (\UnexpectedValueException $exception) {
+                $this->assertStringContainsString('legacy number captures', $exception->getMessage());
+                $this->assertSame($old, $destination->fresh()->destination_number_regex);
+            }
+            $plan->dialplan_xml = str_replace('custom-$1', 'custom-target', $plan->dialplan_xml);
+            $plan->save();
+            $plan->dialplan_details()->where('dialplan_detail_type', 'transfer')->update(['dialplan_detail_data' => 'custom-target XML account.test']);
+            $actions = $this->actionsByCondition($plan->dialplan_xml);
+        }
+
+        $this->assertSame('pending', $service->refresh($destination->getKey(), false)['status']);
+        $this->assertSame($old, $destination->fresh()->destination_number_regex);
+        $this->assertSame('updated', $service->refresh($destination->getKey(), true)['status']);
+        $this->assertSame($new, $destination->fresh()->destination_number_regex);
+        $this->assertSame($actions, $this->actionsByCondition($plan->fresh()->dialplan_xml));
+        $this->assertSame($new, $plan->dialplan_details()->where('dialplan_detail_tag', 'condition')->first()->dialplan_detail_data);
+        $this->assertSame(['status' => 'current', 'context' => 'public'], $service->refresh($destination->getKey(), true));
+
+        // A custom expression must be left for the administrator, even when
+        // the Phone Number itself still carries the recognized stock expression.
+        DB::table('v_destinations')->where('destination_uuid', $destination->getKey())->update(['destination_number_regex' => $old]);
+        $before = $plan->fresh()->dialplan_xml;
+        try {
+            $service->refresh($destination->getKey(), true);
+            $this->fail('A mismatched/custom expression was overwritten.');
+        } catch (\UnexpectedValueException $exception) {
+            $this->assertStringContainsString('Custom DID condition', $exception->getMessage());
+            $this->assertSame($old, $destination->fresh()->destination_number_regex);
+            $this->assertSame($before, $plan->fresh()->dialplan_xml);
+        }
+    }
+
+    public static function historicalMatches(): array
+    {
+        return [
+            'France' => ['33', null, null, '123456789', '^\\+?(?:33)?(123456789)$', false],
+            'NANP' => ['1', null, null, '5304792220', '^\\+?1?(5304792220)$', false],
+            'separate area and zero trunk' => ['44', '20', '0', '79460958', '^(\\+?44?(2079460958))$', true],
+            'separate nonzero trunk' => ['7', null, '8', '9108583458', '^(\\+?7?(9108583458)|8?(9108583458))$', true],
+        ];
     }
 
     public function test_rules_editor_still_supplies_context_for_legacy_details(): void

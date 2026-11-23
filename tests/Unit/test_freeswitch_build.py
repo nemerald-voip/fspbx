@@ -26,7 +26,7 @@ JOBS=2
         self.assertEqual(result.returncode, expected, result.stdout + result.stderr)
         return result
 
-    def sofia_fixture(self, version='1.13.18', tls_header=True, tls_symbol=True, name='library'):
+    def sofia_fixture(self, version='1.13.19', tls_header=True, tls_symbol=True, name='library'):
         prefix = self.root / name
         (prefix / 'include/sofia-sip').mkdir(parents=True)
         (prefix / 'lib/pkgconfig').mkdir(parents=True)
@@ -50,7 +50,7 @@ Cflags: -I${{includedir}}
 ''')
         return prefix
 
-    def probe_sofia(self, expected=0, reference='v1.13.18', runtime='library'):
+    def probe_sofia(self, expected=0, reference='v1.13.19', runtime='library'):
         return self.run_shell(f'''
 export PKG_CONFIG_LIBDIR="$FIXTURE/library/lib/pkgconfig"
 export PKG_CONFIG_PATH=
@@ -69,6 +69,27 @@ fs_dependency_ready sofia-sip-ua {reference}
     def test_missing_dependency_is_not_reused(self):
         self.probe_sofia(expected=1)
 
+    def test_previous_sofia_release_requires_rebuilding(self):
+        self.sofia_fixture(version='1.13.18')
+        self.probe_sofia(expected=1)
+        result = self.run_shell('''
+export PKG_CONFIG_LIBDIR="$FIXTURE/library/lib/pkgconfig"
+export PKG_CONFIG_PATH=
+export LD_LIBRARY_PATH="$FIXTURE/library/lib"
+fs_check_libraries
+''', expected=1)
+        self.assertIn('Sofia-SIP 1.13.19 or newer', result.stderr)
+
+    def test_source_release_check_rejects_stale_branches_and_invalid_versions(self):
+        source = self.root / 'source'
+        source.mkdir()
+        for version, expected in (('1.11.3-release', 1), ('1.11.4-release', 0),
+                                  ('1.11.5-dev', 0), ('unknown', 1)):
+            with self.subTest(version=version):
+                (source / 'configure.ac').write_text(
+                    f'AC_INIT([freeswitch], [{version}], bugs@freeswitch.org)\n')
+                self.run_shell('fs_check_source_version "$FIXTURE/source"', expected)
+
     def test_build_dependencies_preserve_debian_release_compatibility(self):
         for release, included, excluded in (
             ('bookworm', {'mlocate', 'python3-distutils'}, {'python3-setuptools'}),
@@ -85,7 +106,8 @@ fs_install_build_dependencies
                 self.assertFalse(excluded & packages)
                 self.assertTrue({'sudo', 'libc-bin', 'libtool-bin', 'libhiredis-dev',
                                  'libpq-dev', 'libpcre2-dev', 'libncurses-dev',
-                                 'libtiff-dev', 'curl', 'wget'} <= packages)
+                                 'libtiff-dev', 'libminiupnpc-dev', 'libnatpmp-dev',
+                                 'curl', 'wget'} <= packages)
                 self.assertFalse({'libpcre3-dev', 'libncurses5-dev', 'libtiff5-dev'} & packages)
 
     @unittest.skipUnless(os.environ.get('FSPBX_TEST_LIBKS_REPOSITORY'),

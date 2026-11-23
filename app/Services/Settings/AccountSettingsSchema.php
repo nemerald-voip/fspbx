@@ -6,6 +6,7 @@ use App\Models\DefaultSettings;
 use App\Models\Domain;
 use App\Models\DomainSettings;
 use App\Models\Menu;
+use App\Support\Localization\DateTimeNotation;
 use App\Support\Localization\LocaleRegistry;
 
 /**
@@ -54,6 +55,7 @@ class AccountSettingsSchema extends SettingsSchema
                 'searchable' => true,
                 'info' => __('Sets the display language for everyone in this account. Only languages that are translated enough to use are listed. Leave empty to inherit the system default.'),
             ],
+            ...$this->dateTimeFields(account: true),
             [
                 'key' => 'menu',
                 'category' => 'domain',
@@ -137,11 +139,14 @@ class AccountSettingsSchema extends SettingsSchema
 
         $values = [];
         foreach ($this->fields() as $field) {
-            $values[$field['key']] = $rows->first(fn (DomainSettings $row) =>
+            $row = $rows->first(fn (DomainSettings $row) =>
                 $row->domain_setting_category === $field['category']
                 && $row->domain_setting_subcategory === $field['subcategory']
                 && $row->domain_setting_name === $field['name']
-            )?->domain_setting_value;
+            );
+            $values[$field['key']] = $row && isset($field['fallback'])
+                ? DateTimeNotation::normalize($field['key'], $row->domain_setting_value)
+                : $row?->domain_setting_value;
         }
         if ($values['menu'] && ! Menu::query()->whereKey($values['menu'])->exists()) {
             $values['menu'] = null;

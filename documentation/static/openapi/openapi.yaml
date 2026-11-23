@@ -1731,7 +1731,7 @@ paths:
                   example: '8603123456789'
                 device_profile_uuid:
                   type: string
-                  description: 'Optional device profile UUID.'
+                  description: 'Optional device profile UUID. Must be a valid UUID.'
                   example: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
                 device_key_template_uuid:
                   type: string
@@ -2118,16 +2118,16 @@ paths:
                   example: '8603123456789'
                 device_profile_uuid:
                   type: string
-                  description: 'Optional device profile UUID.'
+                  description: 'Optional device profile UUID. Must be a valid UUID.'
                   example: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
-                device_template:
-                  type: string
-                  description: 'Deprecated legacy template identifier. Prefer device_template_uuid.'
-                  example: 'Yealink T46U'
                 device_template_uuid:
                   type: string
                   description: 'Optional provisioning template UUID. Must be a valid UUID.'
                   example: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
+                device_template:
+                  type: string
+                  description: 'Deprecated legacy template identifier. Prefer device_template_uuid.'
+                  example: 'Yealink T46U'
                 device_description:
                   type: string
                   description: 'Optional label or description for the device.'
@@ -3411,7 +3411,7 @@ paths:
     post:
       summary: 'Create an extension'
       operationId: createAnExtension
-      description: "Creates a new extension in the specified domain.\n\nNotes:\n- Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.\n- Returns the created extension object."
+      description: "Create an extension in the selected account. Provide the extension number,\nthe first name to display in the directory, and whether to create a voicemail box.\n\nRequires access to the account and the `extension_add` permission."
       parameters: []
       responses:
         201:
@@ -3523,7 +3523,7 @@ paths:
                     type: string
                     example: null
         400:
-          description: 'Invalid domain UUID'
+          description: 'Unsupported dialplan context'
           content:
             application/json:
               schema:
@@ -3531,9 +3531,9 @@ paths:
                 example:
                   error:
                     type: invalid_request_error
-                    message: 'Invalid domain UUID.'
-                    code: invalid_request
-                    param: domain_uuid
+                    message: 'Use public or the target account domain name for user_context.'
+                    code: invalid_parameter
+                    param: user_context
                 properties:
                   error:
                     type: object
@@ -3543,13 +3543,13 @@ paths:
                         example: invalid_request_error
                       message:
                         type: string
-                        example: 'Invalid domain UUID.'
+                        example: 'Use public or the target account domain name for user_context.'
                       code:
                         type: string
-                        example: invalid_request
+                        example: invalid_parameter
                       param:
                         type: string
-                        example: domain_uuid
+                        example: user_context
         401:
           description: Unauthenticated
           content:
@@ -3574,6 +3574,34 @@ paths:
                       code:
                         type: string
                         example: unauthenticated
+        403:
+          description: 'Missing context permission'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Setting user_context requires the extension_user_context permission.'
+                    code: forbidden_permission
+                    param: user_context
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Setting user_context requires the extension_user_context permission.'
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      param:
+                        type: string
+                        example: user_context
         404:
           description: 'Domain not found'
           content:
@@ -3619,6 +3647,10 @@ paths:
                   type: string
                   description: 'First name for directory display. Must not be greater than 60 characters.'
                   example: Front
+                voicemail_enabled:
+                  type: boolean
+                  description: 'Set to true to create a mailbox for this extension, or false to skip it.'
+                  example: true
                 directory_last_name:
                   type: string
                   description: 'Last name for directory display. Must not be greater than 60 characters.'
@@ -3743,10 +3775,6 @@ paths:
                   type: string
                   description: 'Emergency caller ID name.'
                   example: 'Front Desk'
-                voicemail_enabled:
-                  type: boolean
-                  description: 'Whether voicemail should be created/enabled. If true, a voicemail box will be created. If false, no voicemail box is created.'
-                  example: true
                 voicemail_id:
                   type: string
                   description: ''
@@ -3788,6 +3816,10 @@ paths:
                   type: boolean
                   description: 'Whether voicemail recording instructions are enabled. Defaults to true if omitted.'
                   example: true
+                user_context:
+                  type: string
+                  description: 'Defaults to the account’s domain name for normal call routing. Set to `public` to apply inbound routes to calls from this extension. Setting this field requires the `extension_user_context` permission. Must not be greater than 255 characters.'
+                  example: public
               required:
                 - extension
                 - directory_first_name
@@ -4029,7 +4061,7 @@ paths:
     patch:
       summary: 'Update an extension'
       operationId: updateAnExtension
-      description: "Updates an existing extension in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_edit` permission.\n\nNotes:\n- Fields are optional. If a field is omitted, the current value is unchanged.\n- Voicemail behavior:\n  - If `voicemail_enabled` is omitted, voicemail settings are unchanged.\n  - If `voicemail_enabled` is true, a voicemail box is created (or updated) for this extension.\n  - If `voicemail_enabled` is false, voicemail is disabled for this extension."
+      description: "Send the settings you want to change for an extension in the selected account.\nFor example, set `voicemail_enabled` to `true` to enable its mailbox or\n`false` to disable it.\n\nRequires access to the account and the `extension_edit` permission."
       parameters: []
       responses:
         200:
@@ -4140,6 +4172,34 @@ paths:
                   follow_me_enabled:
                     type: string
                     example: null
+        400:
+          description: 'Unsupported dialplan context'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Use public or the target account domain name for user_context.'
+                    code: invalid_parameter
+                    param: user_context
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Use public or the target account domain name for user_context.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: user_context
         401:
           description: Unauthenticated
           content:
@@ -4165,7 +4225,7 @@ paths:
                         type: string
                         example: unauthenticated
         403:
-          description: 'Forbidden (domain access)'
+          description: 'Missing context permission'
           content:
             application/json:
               schema:
@@ -4173,9 +4233,9 @@ paths:
                 example:
                   error:
                     type: invalid_request_error
-                    message: 'You do not have access to this domain.'
-                    code: forbidden_domain
-                    param: domain_uuid
+                    message: 'Setting user_context requires the extension_user_context permission.'
+                    code: forbidden_permission
+                    param: user_context
                 properties:
                   error:
                     type: object
@@ -4185,13 +4245,13 @@ paths:
                         example: invalid_request_error
                       message:
                         type: string
-                        example: 'You do not have access to this domain.'
+                        example: 'Setting user_context requires the extension_user_context permission.'
                       code:
                         type: string
-                        example: forbidden_domain
+                        example: forbidden_permission
                       param:
                         type: string
-                        example: domain_uuid
+                        example: user_context
         404:
           description: 'Not found'
           content:
@@ -4401,6 +4461,10 @@ paths:
                   type: boolean
                   description: 'Whether voicemail recording instructions are enabled. If omitted, value is unchanged.'
                   example: true
+                user_context:
+                  type: string
+                  description: 'Omit to keep the current routing. Use the account’s domain name for normal routing or `public` to apply inbound routes to calls from this extension. Setting this field requires the `extension_user_context` permission. Must not be greater than 255 characters.'
+                  example: public
     delete:
       summary: 'Delete an extension'
       operationId: deleteAnExtension
@@ -4507,6 +4571,372 @@ paths:
                       param:
                         type: string
                         example: extension_uuid
+      tags:
+        - Extensions
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: extension_uuid
+        description: 'The extension UUID.'
+        example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/extensions/{extension_uuid}/sip-credentials':
+    get:
+      summary: 'Retrieve SIP credentials'
+      operationId: retrieveSIPCredentials
+      description: "Returns the extension's current SIP username, password, and domain.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have both `extension_view` and `extension_password` permissions.\n- The extension must belong to the domain in the URL.\n\nTreat the response as a secret. Use HTTPS and do not log or cache it.\nResponses include `Cache-Control: no-store, private`."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object: extension_sip_credentials
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension: '1001'
+                  password: example-only-sip-password
+                  domain: pbx.example.com
+                properties:
+                  extension_uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object:
+                    type: string
+                    example: extension_sip_credentials
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension:
+                    type: string
+                    example: '1001'
+                    description: 'SIP username (extension number).'
+                  password:
+                    type: string
+                    example: example-only-sip-password
+                    description: 'Current SIP password. Sensitive; never log or cache this value.'
+                  domain:
+                    type: string
+                    example: pbx.example.com
+                    description: 'Routing context shown as Domain in the portal. If the value is `public`, use the account’s domain name for SIP registration.'
+        400:
+          description: 'Invalid UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid extension UUID.'
+                    code: invalid_request
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid extension UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: extension_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (missing permission)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: extension_password
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: extension_password
+        404:
+          description: 'Extension not found in domain'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension_uuid
+      tags:
+        - Extensions
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: extension_uuid
+        description: 'The extension UUID.'
+        example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/extensions/{extension_uuid}/regenerate-sip-credentials':
+    post:
+      summary: 'Regenerate SIP credentials'
+      operationId: regenerateSIPCredentials
+      description: "Generates and saves a new SIP password, then returns the updated credentials.\nThe SIP username and domain stay the same. No request body is required;\ncallers cannot choose the password or override the domain or extension in the URL.\n\nAccess rules:\n- Caller must have access to the target domain.\n- Caller must have both `extension_edit` and `extension_password` permissions.\n- The extension must belong to the domain in the URL.\n\nReprovision phones linked to this extension so they receive the new password.\nUpdate manually configured phones with the password in the response.\nLinked Ringotel users receive the update through background synchronization.\nAvoid automatic retries because each successful request generates a new password.\nTreat the response as a secret. Use HTTPS and do not log or cache it.\nResponses include `Cache-Control: no-store, private`."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object: extension_sip_credentials
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension: '1001'
+                  password: example-only-new-sip-password
+                  domain: pbx.example.com
+                properties:
+                  extension_uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object:
+                    type: string
+                    example: extension_sip_credentials
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension:
+                    type: string
+                    example: '1001'
+                    description: 'SIP username (extension number).'
+                  password:
+                    type: string
+                    example: example-only-new-sip-password
+                    description: 'Newly generated SIP password. Sensitive; never log or cache this value.'
+                  domain:
+                    type: string
+                    example: pbx.example.com
+                    description: 'Routing context shown as Domain in the portal. If the value is `public`, use the account’s domain name for SIP registration.'
+        400:
+          description: 'Invalid UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid extension UUID.'
+                    code: invalid_request
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid extension UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: extension_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (missing permission)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Forbidden (missing permission).'
+                  error:
+                    code: forbidden_permission
+                    permission: extension_password
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Forbidden (missing permission).'
+                  error:
+                    type: object
+                    properties:
+                      code:
+                        type: string
+                        example: forbidden_permission
+                      permission:
+                        type: string
+                        example: extension_password
+        404:
+          description: 'Extension not found in domain'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension_uuid
+        500:
+          description: 'Reset failed'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Unable to regenerate SIP credentials.'
+                    code: internal_error
+                    param: null
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Unable to regenerate SIP credentials.'
+                      code:
+                        type: string
+                        example: internal_error
+                      param:
+                        type: string
+                        example: null
       tags:
         - Extensions
     parameters:

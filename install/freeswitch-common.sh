@@ -196,7 +196,7 @@ fs_install_build_dependencies() {
         libmemcached-dev libhiredis-dev libshout3-dev libmpg123-dev libmp3lame-dev \
         yasm nasm libsndfile1-dev libuv1-dev libvpx-dev libavformat-dev libavcodec-dev \
         libavutil-dev libswscale-dev libswresample-dev libyuv-dev libvlc-dev flite1-dev \
-        sox libsox-fmt-all sqlite3 unzip
+        libminiupnpc-dev libnatpmp-dev sox libsox-fmt-all sqlite3 unzip
     # Debian 13 removed python3-distutils; setuptools supplies its replacement.
     # Keep the release-specific tools from the original Debian compatibility fix.
     case "$OS_CODENAME" in
@@ -221,6 +221,15 @@ fs_clone() {
     git -C "$target" fetch --depth 1 origin "$ref"
     git -C "$target" checkout -q --detach FETCH_HEAD
     printf '%s %s\n' "$url" "$(git -C "$target" rev-parse HEAD)" >> "$FS_BACKUP_DIR/source-versions.txt"
+}
+
+fs_check_source_version() {
+    local source=$1 version
+    version=$(sed -n 's/^AC_INIT(\[freeswitch\], \[\([0-9.]*\).*$/\1/p' "$source/configure.ac")
+    [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fs_die 'Unable to determine the FreeSWITCH source version.'
+    dpkg --compare-versions "$version" ge "$FREESWITCH_MIN_VERSION" ||
+        fs_die "FreeSWITCH $FREESWITCH_VERSION contains $version; $FREESWITCH_MIN_VERSION or newer is required. Update the source branch before retrying."
+    fs_info "FreeSWITCH source version: $version"
 }
 
 fs_prepare_compiler_cache() {
@@ -316,7 +325,7 @@ fs_dependency_ready() {
 }
 
 fs_check_libraries() {
-    fs_probe_library sofia-sip-ua 1.13.18 || fs_die 'Sofia-SIP 1.13.18 or newer with working TLS reload support is required.'
+    fs_probe_library sofia-sip-ua 1.13.19 || fs_die 'Sofia-SIP 1.13.19 or newer with working TLS reload support is required.'
     fs_probe_library spandsp 3.1.1 || fs_die 'SpanDSP 3.1.1 or newer with working fax, T.38, and DTMF support is required.'
     pkg-config --atleast-version=10.00 libpcre2-8 || fs_die 'PCRE2 development files are required.'
     pkg-config --modversion sofia-sip-ua spandsp libpcre2-8 > "$FS_BACKUP_DIR/dependency-versions.txt"
@@ -423,7 +432,8 @@ fs_print_completion() {
     printf '  FreeSWITCH has not been restarted. Restart to use the new version.\n'
     printf '  Choose a suitable time: restarting interrupts active calls.\n\n'
     printf '  %s1. Restart when ready:%s\n' "$bold" "$reset"
-    printf '     %ssudo systemctl restart freeswitch%s\n\n' "$cyan" "$reset"
+    printf '     %sfs_cli -x "shutdown now"%s\n' "$cyan" "$reset"
+    printf '     The FS PBX service starts it again automatically (Restart=always).\n\n'
     printf '  %s2. Verify the running version:%s\n' "$bold" "$reset"
     printf '     %ssudo fs_cli -x version%s\n\n' "$cyan" "$reset"
     printf '  %sConfiguration backup:%s\n     %s\n' "$bold" "$reset" "$FS_BACKUP_DIR"

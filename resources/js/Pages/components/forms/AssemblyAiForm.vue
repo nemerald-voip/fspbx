@@ -48,8 +48,9 @@
                             :conditions="[() => !canEdit ]"
                         />
                             <TextElement name="language_code" :label="$t('Language Code')"
-                                :description="$t('The language of your audio file. Default: en_us.')" :placeholder="$t('Optional')"
+                                :description="$t('Setting a language code turns off automatic language detection.')" :placeholder="$t('Optional')"
                                 :floating="false" :columns="{ lg: { wrapper: 5 } }"
+                                @change="handleLanguageCodeChange"
                                 :conditions="[() => !canEdit ]" />
                             <TextElement name="keyterms_prompt" :label="$t('Key terms')"
                                 :description="$t('Up to 200 (Universal) or 1000 (Slam-1) domain terms; max 6 words per phrase.')"
@@ -64,13 +65,15 @@
                             <StaticElement name="h_lang_detect" tag="h4" :content="$t('Language Detection')" :conditions="[() => !canEdit ]" />
                             <ToggleElement name="language_detection" :text="$t('Enable Automatic language detection')"
                                 :default="true" :true-value="true" :false-value="false"
+                                :description="$t('Enabling detection clears the language code.')"
+                                @change="handleLanguageDetectionChange"
                                 :conditions="[() => !canEdit ]" />
                             <TextElement name="language_confidence_threshold" :label="$t('Language Confidence Threshold')"
                                 :description="$t('Error if detected language confidence falls below this threshold. Default: 0.')"
                                 :placeholder="$t('Optional')" :floating="false" :columns="{ lg: { wrapper: 5 } }"
-                                :conditions="[() => !canEdit ]" />
+                                :conditions="[() => !canEdit, ['language_detection', true]]" />
                             <ObjectElement name="language_detection_options" :columns="{ lg: { wrapper: 6 } }"
-                                :conditions="[() => !canEdit ]"
+                                :conditions="[() => !canEdit, ['language_detection', true]]"
                                 :add-classes="{
                                     ElementLayout: {
                                         innerWrapper: 'relative mt-2 rounded-lg border border-gray-200 bg-gray-50/60 p-4 lg:p-5 pl-5',
@@ -370,7 +373,7 @@
 <script setup>
 import { clearServerFormErrors } from '../../../composables/serverFormErrors.js';
 import { trans } from '@i18n';
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
 import Skeleton from "@generalComponents/Skeleton.vue"
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 
@@ -385,6 +388,27 @@ const form$ = ref(null)
 const assemblyAiConfig = ref({})
 const isFormLoading = ref(false)
 const isOverride = ref(false)
+const isApplyingConfig = ref(false)
+
+async function applyConfig(config) {
+  isApplyingConfig.value = true
+  try {
+    form$.value.update(config)
+    await nextTick()
+  } finally {
+    isApplyingConfig.value = false
+  }
+}
+
+function handleLanguageCodeChange(value, oldValue, el$) {
+  if (isApplyingConfig.value || !String(value ?? '').trim()) return
+  el$.form$.el$('language_detection')?.update(false)
+}
+
+function handleLanguageDetectionChange(value, oldValue, el$) {
+  if (isApplyingConfig.value || value !== true) return
+  el$.form$.el$('language_code')?.update(null)
+}
 
 
 // inheriting means: you are on a domain page and API says effective scope is system
@@ -434,10 +458,10 @@ async function revertToDefaults() {
   await getAssemblyAiConfig()
 }
 
-function cancelOverride() {
+async function cancelOverride() {
   isOverride.value = false
   // reset the form to current effective values (still inheriting)
-  form$.value.update(assemblyAiConfig.value ?? {})
+  await applyConfig(assemblyAiConfig.value ?? {})
 }
 
 
@@ -454,7 +478,7 @@ const getAssemblyAiConfig = async () => {
     )
 
     assemblyAiConfig.value = data ?? {}
-    form$.value.update(assemblyAiConfig.value)
+    await applyConfig(assemblyAiConfig.value)
 
     // If config says "domain override exists", user shouldn’t be in override-pending state.
     if (hasDomainOverride.value) isOverride.value = false

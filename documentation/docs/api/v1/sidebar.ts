@@ -172,6 +172,18 @@ const sidebar: SidebarsConfig = {
           label: "Delete an extension",
           className: "api-method delete",
         },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-sip-credentials",
+          label: "Retrieve SIP credentials",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/regenerate-sip-credentials",
+          label: "Regenerate SIP credentials",
+          className: "api-method post",
+        },
       ],
     },
     {

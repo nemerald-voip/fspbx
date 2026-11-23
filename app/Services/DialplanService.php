@@ -331,6 +331,16 @@ class DialplanService
             return;
         }
 
+        // Single mode can select a DID from any public context. Invalidate
+        // those shared selections and cached misses together after a change.
+        if ($context === 'public' || str_starts_with($context, 'public@') || str_ends_with($context, '.public')) {
+            FusionCache::clear('dialplan:public');
+            foreach (['dialplan:public:*', 'dialplan:public@*', 'dialplan:*.public', 'dialplan:*.public:*'] as $pattern) {
+                FusionCache::clearPattern($pattern);
+            }
+            return;
+        }
+
         $key = 'dialplan:' . $context;
 
         // Multiple mode caches the context itself. Single mode caches the
