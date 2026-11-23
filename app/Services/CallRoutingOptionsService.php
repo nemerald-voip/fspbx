@@ -388,7 +388,7 @@ class CallRoutingOptionsService
                         ->orWhereNull('domain_uuid');
                 })
                 ->where('dialplan_context', '!=', 'public')
-                ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
+                ->select('dialplan_uuid', 'domain_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
                 ->first();
 
             // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -454,7 +454,7 @@ class CallRoutingOptionsService
                 $query->where('domain_uuid', $domainUuid)
                     ->orWhereNull('domain_uuid');
             })
-            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
+            ->select('dialplan_uuid', 'domain_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
             ->first();
 
         // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -638,6 +638,7 @@ class CallRoutingOptionsService
 
         if (in_array($dialplan->dialplan_destination, [true, 'true'], true)
             && $dialplan->dialplan_context !== 'public'
+            && $dialplan->domain_uuid === $this->domainUuid
             && ! DynamicRoute::query()->where('dialplan_uuid', $dialplan->dialplan_uuid)->exists()) {
             return [
                 'type' => 'custom_dialplans',

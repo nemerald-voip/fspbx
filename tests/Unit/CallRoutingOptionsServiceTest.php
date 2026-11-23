@@ -358,6 +358,37 @@ class CallRoutingOptionsServiceTest extends TestCase
         ]], (new CallRoutingOptionsService(RoutingDestinations::DOMAIN))->getOptions());
     }
 
+    public function test_api_phone_number_requests_validate_custom_dialplan_targets(): void
+    {
+        Schema::create('dynamic_routes', function (Blueprint $table) {
+            $table->uuid('dynamic_route_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->uuid('dialplan_uuid')->nullable();
+        });
+
+        $domainUuid = RoutingDestinations::DOMAIN;
+        $validUuid = (string) Str::uuid();
+        DB::table('v_dialplans')->insert([
+            'dialplan_uuid' => $validUuid, 'domain_uuid' => $domainUuid, 'dialplan_name' => 'Route',
+            'dialplan_number' => '9400', 'dialplan_context' => 'default', 'dialplan_enabled' => 'true',
+            'dialplan_destination' => 'true', 'dialplan_xml' => '<action application="transfer"/>', 'dialplan_order' => 1,
+        ]);
+
+        foreach ([
+            \App\Http\Requests\Api\V1\StorePhoneNumberRequest::class,
+            \App\Http\Requests\Api\V1\UpdatePhoneNumberRequest::class,
+        ] as $requestClass) {
+            $valid = new $requestClass(['routing_options' => [['type' => 'custom_dialplans', 'extension' => '9400']]]);
+            $valid->setRouteResolver(fn () => (object) ['domain_uuid' => $domainUuid]);
+            $rules = array_intersect_key($valid->rules(), array_flip(['routing_options.*.type', 'routing_options.*.extension']));
+            $this->assertTrue(\Illuminate\Support\Facades\Validator::make($valid->all(), $rules)->passes());
+
+            $invalid = new $requestClass(['routing_options' => [['type' => 'custom_dialplans', 'extension' => '9499']]]);
+            $invalid->setRouteResolver(fn () => (object) ['domain_uuid' => $domainUuid]);
+            $this->assertFalse(\Illuminate\Support\Facades\Validator::make($invalid->all(), $rules)->passes());
+        }
+    }
+
     public function test_custom_dialplan_selector_excludes_invalid_and_time_condition_dialplans(): void
     {
         $domainUuid = RoutingDestinations::DOMAIN;

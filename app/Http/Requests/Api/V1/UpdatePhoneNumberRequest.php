@@ -53,6 +53,17 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'present',
                 function ($attribute, $value, $fail) {
                     $type = data_get($this->input(), str_replace('.extension', '.type', $attribute));
+                    if ($type === 'custom_dialplans' && ! \App\Models\Dialplans::query()
+                        ->where('domain_uuid', (string) $this->route('domain_uuid'))
+                        ->where('dialplan_number', $value)
+                        ->where('dialplan_enabled', 'true')
+                        ->where('dialplan_destination', 'true')
+                        ->where('dialplan_context', '<>', 'public')
+                        ->whereNotIn('dialplan_uuid', \App\Models\DynamicRoute::query()->select('dialplan_uuid'))
+                        ->exists()) {
+                        $fail('Select a valid custom dialplan in this account.');
+                        return;
+                    }
 
                     if (! \App\Services\CallRoutingOptionsService::requiresTarget((string) $type)) return;
 
