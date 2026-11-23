@@ -89,11 +89,11 @@ class BusinessHourHoliday extends Model
             case 'us_holiday':
             case 'ca_holiday':
             case 'uk_holiday':
-                $next = $this->getNextPresetHolidayDate()->format('F j, Y');
+                $next = $this->getNextPresetHolidayDate()->format(local_date_format($this->businessHour?->domain_uuid, true));
                 return "Every year (next: {$next})";
 
             case 'single_date':
-                $date = $this->start_date->format('F j, Y');
+                $date = $this->start_date->format(local_date_format($this->businessHour?->domain_uuid, true));
                 if ($this->start_time && $this->end_time) {
                     $from = $this->start_time instanceof Carbon
                         ? $this->start_time->format('H:i')
@@ -108,8 +108,8 @@ class BusinessHourHoliday extends Model
             case 'date_range':
                 // If both times are set, show the full span
                 if ($this->start_time && $this->end_time) {
-                    $fromDate = $this->start_date->format('F j, Y');
-                    $toDate   = $this->end_date->format('F j, Y');
+                    $fromDate = $this->start_date->format(local_date_format($this->businessHour?->domain_uuid, true));
+                    $toDate   = $this->end_date->format(local_date_format($this->businessHour?->domain_uuid, true));
                     $fromTime = $this->start_time instanceof Carbon
                         ? $this->start_time->format('H:i')
                         : $this->start_time;
@@ -121,7 +121,7 @@ class BusinessHourHoliday extends Model
                 }
 
                 // Otherwise just dates
-                return "{$this->start_date->format('F j, Y')} – {$this->end_date->format('F j, Y')}";
+                return "{$this->start_date->format(local_date_format($this->businessHour?->domain_uuid, true))} – {$this->end_date->format(local_date_format($this->businessHour?->domain_uuid, true))}";
 
 
             case 'recurring_pattern':

@@ -49,7 +49,7 @@ class FaxQueues extends Model
             return null;
         }
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::parse($this->fax_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($this->fax_date)->setTimezone($timeZone)->format(local_datetime_format($this->domain_uuid));
     }
 
     public function getFaxRetryDateFormattedAttribute()
@@ -58,7 +58,7 @@ class FaxQueues extends Model
             return null;
         }
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::parse($this->fax_retry_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($this->fax_retry_date)->setTimezone($timeZone)->format(local_datetime_format($this->domain_uuid));
     }
 
     public function getFaxNotifyDateFormattedAttribute()
@@ -67,7 +67,7 @@ class FaxQueues extends Model
             return null;
         }
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::parse($this->fax_notify_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($this->fax_notify_date)->setTimezone($timeZone)->format(local_datetime_format($this->domain_uuid));
     }
 
     public function getFaxCallerIdNumberFormattedAttribute()

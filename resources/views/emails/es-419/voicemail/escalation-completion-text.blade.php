@@ -11,7 +11,7 @@ Estado: {{ $notification->status === 'accepted' ? 'CORRECTO' : 'FALLIDO' }}
 Nombre del identificador de llamadas: {{ $notification->caller_id_name ?? '—' }}
 Número del identificador de llamadas: {{ $notification->caller_id_number ?? '—' }}
 Duración del mensaje: {{ $notification->message_length_seconds ?? '—' }} segundos
-Dejado el: {{ optional($notification->message_left_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}
+Dejado el: {{ $attributes['message_left_at'] }}
 Aceptado por: {{ $notification->accepted_by_number ?? '—' }}
 Número de reintento: {{ $notification->current_retry ?? 0 }}
 Prioridad final: {{ $notification->current_priority ?? '—' }}

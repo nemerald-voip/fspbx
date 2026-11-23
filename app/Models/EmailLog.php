@@ -59,7 +59,7 @@ class EmailLog extends Model
             return null;
         }
         $timeZone = auth()->user()->time_zone;
-        return Carbon::parse($value)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($value)->setTimezone($timeZone)->format(local_datetime_format($this->domain_uuid));
     }
 
     public function domain(): BelongsTo

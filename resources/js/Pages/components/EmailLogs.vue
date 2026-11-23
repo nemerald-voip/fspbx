@@ -381,6 +381,7 @@ import DatePicker from "@generalComponents/DatePicker.vue";
 import Paginator from "@generalComponents/Paginator.vue";
 import Badge from "@generalComponents/Badge.vue";
 import moment from 'moment-timezone';
+import { useDateTimeFormat } from '../../composables/useDateTimeFormat.js';
 import RestartIcon from "./icons/RestartIcon.vue";
 
 
@@ -740,9 +741,10 @@ const eventTone = (event) => {
     return 'bg-gray-400';
 }
 
+const dateTimeFormat = useDateTimeFormat();
 const eventTimestamp = (event) => {
     const value = event.ReceivedAt || event.DeliveredAt || event.BouncedAt || event.OpenedAt || event.ClickedAt || '';
-    return value ? moment(value).format('MMM D, YYYY h:mm A') : '';
+    return value ? moment(value).format(dateTimeFormat.dateThenTime(false)) : '';
 }
 
 const eventDetailRows = (event) => {

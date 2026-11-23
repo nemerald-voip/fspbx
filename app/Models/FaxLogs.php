@@ -50,7 +50,7 @@ class FaxLogs extends Model
         return Carbon::createFromTimestamp($this->fax_epoch, 'UTC')
             ->setTimezone($timeZone)
             ->locale(app()->getLocale())
-            ->translatedFormat('g:i:s A M d, Y');
+            ->translatedFormat(local_datetime_format($this->domain_uuid));
     }
 
     public function getSourceFormattedAttribute()

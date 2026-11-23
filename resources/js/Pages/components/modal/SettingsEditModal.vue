@@ -30,7 +30,8 @@
                         <TextElement :name="field('subcategory')" :label="$t('Setting Name')" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
                         <SelectElement :name="field('name')" :label="$t('Type')" :items="typeOptions" :native="false" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
                         <TextElement :name="field('order')" :label="$t('Order')" input-type="number" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
-                        <TextareaElement :name="field('value')" :label="$t('Value')" :rows="2" :autogrow="false" :floating="false" />
+                        <SelectElement v-if="formatOptions" :name="field('value')" :label="$t('Value')" :items="formatOptions" :native="false" :floating="false" allow-absent />
+                        <TextareaElement v-else :name="field('value')" :label="$t('Value')" :rows="2" :autogrow="false" :floating="false" />
                         <ToggleElement :name="field('enabled')" :text="$t('Enabled')" />
                         <TextareaElement :name="field('description')" :label="$t('Description')" :rows="2" :floating="false" :readonly="isDomainInherited" />
                         <ButtonElement name="submit" :button-label="$t('Save')" :submits="true" align="right" />
@@ -99,12 +100,31 @@ const recordUuidField = computed(() => props.item?.[`${prefix.value}_uuid`] ? `$
 
 const field = (name) => `${prefix.value}_${name}`
 
+const formatOptions = computed(() => {
+    const value = (name) => form$.value?.data?.[field(name)] ?? props.item?.[field(name)]
+    if (value('category') !== 'domain' || value('name') !== 'text') return null
+
+    switch (value('subcategory')) {
+        case 'date_format':
+            return { us: 'Jan 31, 2026', eu: '31/01/2026', iso: '2026-01-31' }
+        case 'time_format':
+            return { '12h': '3:04 PM', '24h': '15:04' }
+        default:
+            return null
+    }
+})
+
 const hydrateForm = async () => {
     if (!props.show || props.loading) return
     await nextTick()
     if (!form$.value) return
 
     form$.value?.update(props.item || {})
+    // The setting identity determines which value field Vueform mounts.
+    if (formatOptions.value) {
+        await nextTick()
+        form$.value?.el$(field('value'))?.update(props.item?.[field('value')])
+    }
     form$.value?.clean()
 }
 

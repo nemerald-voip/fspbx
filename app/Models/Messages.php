@@ -62,7 +62,7 @@ class Messages extends Model
 
                 return Carbon::parse($this->created_at)
                     ->setTimezone($time_zone)
-                    ->format('g:i:s A M d, Y');
+                    ->format(local_datetime_format($this->domain_uuid));
             }
         );
     }

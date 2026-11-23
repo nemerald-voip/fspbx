@@ -170,6 +170,7 @@ class EmailTemplatePreviewService
             'voicemail_file_mode' => 'link',
             'voicemail_download_url' => 'https://example.test/voicemail/sample',
             'notification' => $notification,
+            'message_left_at' => $notification->message_left_at->copy()->utc()->format('g:i:s A M d, Y T'),
             'tenantTimeZone' => 'UTC',
             'subjectLine' => 'Voicemail escalation accepted for mailbox 1001',
             'statusLabel' => 'SUCCESSFUL',

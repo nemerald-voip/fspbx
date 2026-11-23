@@ -1,5 +1,5 @@
 {{-- email-template
-version: 1.0.0
+version: 1.0.1
 language: es-419
 category: voicemail
 subcategory: escalation-completion
@@ -46,7 +46,7 @@ description: Informe de finalización del escalamiento de un mensaje de voz
         </tr>
         <tr>
             <td><strong>Dejado el:</strong></td>
-            <td>{{ optional($notification->message_left_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}</td>
+            <td>{{ $attributes['message_left_at'] }}</td>
         </tr>
         <tr>
             <td><strong>Aceptado por:</strong></td>

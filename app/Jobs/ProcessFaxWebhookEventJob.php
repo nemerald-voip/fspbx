@@ -303,7 +303,7 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
 
         return Carbon::createFromTimestamp($faxEpoch, 'UTC')
             ->setTimezone(get_local_time_zone($domainUuid))
-            ->format('g:i:s A M d, Y');
+            ->format(local_datetime_format($domainUuid));
     }
 
     private function stringOrNull($value): ?string

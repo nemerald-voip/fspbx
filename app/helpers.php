@@ -17,6 +17,7 @@ use App\Models\GatewaySetting;
 use App\Models\PaymentGateway;
 use App\Models\SwitchVariable;
 use App\Models\DefaultSettings;
+use App\Support\Localization\DateTimeNotation;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Http;
@@ -925,6 +926,79 @@ if (!function_exists('get_local_time_zone')) {
     }
 }
 
+
+if (!function_exists('get_local_date_time_formats')) {
+    /**
+     * Date and time display formats for a tenant.
+     *
+     * Read like the time zone: the account's domain setting, else the default setting, else US notation.
+     *   domain > date_format: us (Jan 31, 2026), eu (31/01/2026), iso (2026-01-31)
+     *   domain > time_format: 12h (3:04:05 PM), 24h (15:04:05)
+     *
+     * @return array{date_format: string, time_format: string}
+     */
+    function get_local_date_time_formats($domain_uuid = null): array
+    {
+        if (!$domain_uuid) {
+            $domain_uuid = session('domain_uuid');
+        }
+
+        return Cache::remember("{$domain_uuid}_dateTimeFormats", 86400, function () use ($domain_uuid) {
+            $date = strtolower(trim((string) get_domain_setting('date_format', $domain_uuid)));
+            $time = strtolower(trim((string) get_domain_setting('time_format', $domain_uuid)));
+
+            return [
+                'date_format' => in_array($date, ['us', 'eu', 'iso'], true) ? $date : 'us',
+                'time_format' => $time === '24h' ? '24h' : '12h',
+            ];
+        });
+    }
+}
+
+if (!function_exists('local_date_format')) {
+    /**
+     * PHP date format for the tenant's date notation. $long spells out the month (us/eu).
+     */
+    function local_date_format($domain_uuid = null, bool $long = false): string
+    {
+        return DateTimeNotation::date(get_local_date_time_formats($domain_uuid)['date_format'], $long);
+    }
+}
+
+if (!function_exists('local_time_format')) {
+    /**
+     * PHP time format for the tenant's 12h/24h setting.
+     */
+    function local_time_format($domain_uuid = null, bool $seconds = true): string
+    {
+        return DateTimeNotation::time(get_local_date_time_formats($domain_uuid)['time_format'], $seconds);
+    }
+}
+
+if (!function_exists('local_datetime_format')) {
+    /**
+     * PHP format for date and time. US keeps the existing "time date" order (3:04:05 PM Jan 31, 2026);
+     * eu and iso put the date first (31/01/2026 15:04:05).
+     */
+    function local_datetime_format($domain_uuid = null, bool $seconds = true): string
+    {
+        $formats = get_local_date_time_formats($domain_uuid);
+        $date = DateTimeNotation::date($formats['date_format']);
+        $time = DateTimeNotation::time($formats['time_format'], $seconds);
+
+        return $formats['date_format'] === 'us' ? "$time $date" : "$date $time";
+    }
+}
+
+if (!function_exists('local_hour_format')) {
+    /**
+     * PHP format for an hour label (3 PM or 15:00).
+     */
+    function local_hour_format($domain_uuid = null): string
+    {
+        return get_local_date_time_formats($domain_uuid)['time_format'] === '24h' ? 'H:00' : 'g A';
+    }
+}
 
 if (!function_exists('get_domain_setting')) {
     /**

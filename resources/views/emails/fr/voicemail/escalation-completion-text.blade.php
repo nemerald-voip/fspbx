@@ -11,7 +11,7 @@ Statut : {{ $notification->status === 'accepted' ? 'RÉUSSIE' : 'ÉCHEC' }}
 Nom de présentation : {{ $notification->caller_id_name ?? '—' }}
 Numéro de présentation : {{ $notification->caller_id_number ?? '—' }}
 Durée du message : {{ $notification->message_length_seconds ?? '—' }} secondes
-Déposé le : {{ optional($notification->message_left_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}
+Déposé le : {{ $attributes['message_left_at'] }}
 Accepté par : {{ $notification->accepted_by_number ?? '—' }}
 Numéro de nouvelle tentative : {{ $notification->current_retry ?? 0 }}
 Priorité finale : {{ $notification->current_priority ?? '—' }}

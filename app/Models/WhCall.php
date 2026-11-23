@@ -26,7 +26,7 @@ class WhCall extends WebhookCall
             return null;
         }
         $timeZone = auth()->user()->time_zone;
-        return Carbon::parse($this->created_at)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+        return Carbon::parse($this->created_at)->setTimezone($timeZone)->format(local_datetime_format(null));
     }
 
 }

@@ -41,7 +41,7 @@ class EventGuardLogs extends Model
             if ($model->log_date) {
                 $time_zone = get_local_time_zone(null);
 
-                $model->log_date_formatted = Carbon::parse($model->log_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
+                $model->log_date_formatted = Carbon::parse($model->log_date)->setTimezone($time_zone)->format(local_datetime_format(null));
 
             }
             // $model->destroy_route = route('devices.destroy', $model);

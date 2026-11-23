@@ -1106,6 +1106,22 @@ class DatabaseSeeder extends Seeder
     {
         $settings = [
             [
+                'default_setting_category' => 'domain',
+                'default_setting_subcategory' => 'date_format',
+                'default_setting_name' => 'text',
+                'default_setting_value' => 'us',
+                'default_setting_enabled' => true,
+                'default_setting_description' => 'Date display order. Use us for month first (Jan 31, 2026), eu for day first (31/01/2026), or iso for year first (2026-01-31).',
+            ],
+            [
+                'default_setting_category' => 'domain',
+                'default_setting_subcategory' => 'time_format',
+                'default_setting_name' => 'text',
+                'default_setting_value' => '12h',
+                'default_setting_enabled' => true,
+                'default_setting_description' => 'Clock display. Use 12h for a 12-hour clock (3:04 PM) or 24h for a 24-hour clock (15:04).',
+            ],
+            [
                 'default_setting_category' => 'messaging',
                 'default_setting_subcategory' => 'opt_out_scope',
                 'default_setting_name' => 'text',

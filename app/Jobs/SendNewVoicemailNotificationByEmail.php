@@ -7,7 +7,6 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
 use App\Models\DomainSettings;
-use Illuminate\Support\Carbon;
 use App\Models\DefaultSettings;
 use App\Models\VoicemailMessages;
 use App\Models\Extensions;
@@ -223,8 +222,6 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 $downloadUrl = app(VoicemailMessageUrlService::class)->downloadUrlForMessage($message);
             }
 
-            $timezone = get_local_time_zone($domain_uuid);
-
             $vars = [
                 'app_name' => config('app.name', 'FS PBX'),
                 'caller_id_number' => (string) $message->caller_id_number,
@@ -232,7 +229,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 'voicemail_id'     => (string) ($message->voicemail?->voicemail_id ?? ''),
                 'voicemail_description'     => (string) ($message->voicemail?->voicemail_description ?? ''),
                 'dialed_user' => (string) ($message->voicemail?->voicemail_id ?? ''),
-                'message_date'       => Carbon::createFromTimestamp($message->created_epoch)->tz($timezone)->toDayDateTimeString(),
+                'message_date'       => $message->created_epoch_formatted,
                 'message_duration'   => gmdate('i\m s\s', (int) $message->message_length),
                 'message_text'    => (string) $message->message_transcription,
                 'voicemail_download_url' => (string) $downloadUrl,

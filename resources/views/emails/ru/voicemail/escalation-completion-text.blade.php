@@ -11,7 +11,7 @@ layout: none
 Имя АОН: {{ $notification->caller_id_name ?? '—' }}
 Номер АОН: {{ $notification->caller_id_number ?? '—' }}
 Длительность сообщения: {{ $notification->message_length_seconds ?? '—' }} секунд
-Оставлено: {{ optional($notification->message_left_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}
+Оставлено: {{ $attributes['message_left_at'] }}
 Принято номером: {{ $notification->accepted_by_number ?? '—' }}
 Номер повторной попытки: {{ $notification->current_retry ?? 0 }}
 Последний приоритет: {{ $notification->current_priority ?? '—' }}
