@@ -358,6 +358,36 @@ class CallRoutingOptionsServiceTest extends TestCase
         ]], (new CallRoutingOptionsService(RoutingDestinations::DOMAIN))->getOptions());
     }
 
+    public function test_custom_dialplan_selector_excludes_invalid_and_time_condition_dialplans(): void
+    {
+        $domainUuid = RoutingDestinations::DOMAIN;
+        $rows = [
+            ['name' => 'Route', 'number' => '9400', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>'],
+            ['name' => 'Disabled', 'number' => '9401', 'context' => 'default', 'enabled' => 'false', 'destination' => 'true', 'xml' => '<action application="transfer"/>'],
+            ['name' => 'Public', 'number' => '9402', 'context' => 'public', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>'],
+            ['name' => 'Schedule', 'number' => '9403', 'context' => 'default', 'enabled' => 'true', 'destination' => 'false', 'xml' => '<action application="set" data="hour=9"/>'],
+            ['name' => 'Foreign', 'number' => '9404', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>', 'domain' => RoutingDestinations::TARGET],
+        ];
+        foreach ($rows as $index => $row) {
+            DB::table('v_dialplans')->insert([
+                'dialplan_uuid' => (string) Str::uuid(), 'domain_uuid' => $row['domain'] ?? $domainUuid,
+                'dialplan_name' => $row['name'], 'dialplan_number' => $row['number'],
+                'dialplan_context' => $row['context'], 'dialplan_enabled' => $row['enabled'],
+                'dialplan_destination' => $row['destination'], 'dialplan_xml' => $row['xml'],
+                'dialplan_order' => $index,
+            ]);
+        }
+        request()->merge(['category' => 'custom_dialplans']);
+        $options = (new CallRoutingOptionsService($domainUuid))->getOptions();
+        $this->assertSame(['9400'], array_column($options, 'extension'));
+
+        $target = (new CallRoutingOptionsService($domainUuid))->findTarget('custom_dialplans', DB::table('v_dialplans')->where('dialplan_number', '9400')->value('dialplan_uuid'));
+        $this->assertSame(['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test'], (new CallRoutingOptionsService($domainUuid))->actionForTarget('custom_dialplans', $target, 'example.test'));
+
+        request()->merge(['category' => 'time_conditions']);
+        $this->assertSame(['9403'], array_column((new CallRoutingOptionsService($domainUuid))->getOptions(), 'extension'));
+    }
+
     public function test_dynamic_route_selector_excludes_disabled_and_foreign_routes(): void
     {
         Schema::create('dynamic_routes', function (Blueprint $table) {
@@ -385,6 +415,7 @@ class CallRoutingOptionsServiceTest extends TestCase
             $table->string('dialplan_uuid')->primary();
             $table->string('domain_uuid')->nullable();
             $table->string('dialplan_name')->nullable();
+            $table->string('dialplan_destination')->nullable();
             $table->string('dialplan_number')->nullable();
             $table->string('dialplan_context')->nullable();
             $table->text('dialplan_xml')->nullable();
