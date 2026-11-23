@@ -2,10 +2,20 @@
 
 namespace Tests\Unit;
 
+use App\Jobs\SendTranscriptionEmail;
+use App\Mail\CallTranscriptionReady;
+use App\Mail\FaxSent;
+use App\Mail\VoicemailEscalationCompletionMail;
+use App\Models\VmNotifyLog;
+use App\Models\VmNotifyNotification;
 use Carbon\Carbon;
+use Illuminate\Cache\Events\CacheHit;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -20,7 +30,7 @@ class DateTimeFormatHelpersTest extends TestCase
 
         $this->databasePath = sys_get_temp_dir() . '/fspbx-datetime-' . bin2hex(random_bytes(8)) . '.sqlite';
         touch($this->databasePath);
-        config(['database.default' => 'sqlite', 'database.connections.sqlite.database' => $this->databasePath]);
+        config(['cache.default' => 'array', 'database.default' => 'sqlite', 'database.connections.sqlite.database' => $this->databasePath]);
         DB::purge('sqlite');
         DB::reconnect('sqlite');
 
@@ -109,5 +119,78 @@ class DateTimeFormatHelpersTest extends TestCase
         $this->defaultSetting('time_format', 'military');
 
         $this->assertSame(['date_format' => 'us', 'time_format' => '12h'], get_local_date_time_formats($this->domain));
+    }
+
+    public function test_escalation_email_formats_message_and_logs_in_both_bodies(): void
+    {
+        $this->domainSetting('time_zone', 'Europe/Amsterdam');
+        $this->domainSetting('date_format', 'eu');
+        $this->domainSetting('time_format', '24h');
+
+        $notification = new VmNotifyNotification([
+            'domain_uuid' => $this->domain, 'status' => 'accepted', 'mailbox' => '1001',
+            'message_left_at' => Carbon::parse('2026-01-31 23:50:00', 'UTC'),
+        ]);
+        $log = new VmNotifyLog(['level' => 'info', 'message' => 'Accepted']);
+        $log->created_at = Carbon::parse('2026-01-31 23:51:00', 'UTC');
+        $notification->setRelation('logs', collect([$log]));
+        $notification->setRelation('attempts', collect());
+
+        $content = (new VoicemailEscalationCompletionMail($notification))->content();
+        foreach ([$content->htmlString, $content->with['renderedText']] as $body) {
+            $this->assertStringContainsString('01/02/2026 00:50:00 CET', $body);
+            $this->assertStringContainsString('01/02/2026 00:51:00 CET', $body);
+        }
+    }
+
+    public function test_combined_format_reads_cached_preferences_once(): void
+    {
+        get_local_date_time_formats($this->domain);
+        Event::fake([CacheHit::class]);
+        local_datetime_format($this->domain);
+        Event::assertDispatchedTimes(CacheHit::class, 1);
+    }
+
+    public function test_sent_fax_fallback_date_uses_the_fax_account(): void
+    {
+        $this->domainSetting('time_zone', 'Europe/Amsterdam');
+        $this->domainSetting('date_format', 'eu');
+        $this->domainSetting('time_format', '24h');
+        $this->travelTo(Carbon::parse('2026-01-31 23:50:00', 'UTC'), function () {
+            $content = (new FaxSent([
+                'domain_uuid' => $this->domain, 'fax_destination' => '+12025550199', 'fax_pages' => 1,
+            ]))->content();
+            foreach ([$content->htmlString, $content->with['renderedText']] as $body) {
+                $this->assertStringContainsString('01/02/2026 00:50', $body);
+            }
+        });
+    }
+
+    public function test_transcription_job_uses_its_record_account_without_a_session(): void
+    {
+        $this->domainSetting('time_zone', 'Europe/Amsterdam');
+        $this->domainSetting('date_format', 'iso');
+        $this->domainSetting('time_format', '24h');
+        Schema::create('call_transcriptions', function (Blueprint $table) {
+            $table->uuid('uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->timestamps();
+        });
+        $uuid = '22222222-2222-4222-8222-222222222222';
+        DB::table('call_transcriptions')->insert([
+            'uuid' => $uuid, 'domain_uuid' => $this->domain, 'created_at' => '2026-01-31 23:50:00',
+        ]);
+        Mail::fake();
+        $throttle = \Mockery::mock();
+        $throttle->shouldReceive('allow', 'every')->andReturnSelf();
+        $throttle->shouldReceive('then')->once()->andReturnUsing(fn ($send) => $send());
+        Redis::shouldReceive('throttle')->with('transcriptions')->andReturn($throttle);
+
+        (new SendTranscriptionEmail($uuid, 'operator@example.test'))->handle();
+
+        Mail::assertSent(CallTranscriptionReady::class, fn ($mail) =>
+            $mail->attributes['domain_uuid'] === $this->domain
+            && $mail->attributes['date'] === '2026-02-01 @ 00:50'
+        );
     }
 }

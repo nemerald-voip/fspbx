@@ -11,7 +11,7 @@ Status: {{ $statusLabel }}
 Caller ID Name: {{ $notification->caller_id_name ?? '—' }}
 Caller ID Number: {{ $notification->caller_id_number ?? '—' }}
 Message Length: {{ $notification->message_length_seconds ?? '—' }} seconds
-Left At: {{ optional($notification->message_left_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}
+Left At: {{ $attributes['message_left_at'] }}
 Accepted By: {{ $notification->accepted_by_number ?? '—' }}
 Retry Number: {{ $notification->current_retry ?? 0 }}
 Final Priority: {{ $notification->current_priority ?? '—' }}

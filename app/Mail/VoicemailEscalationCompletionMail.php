@@ -14,6 +14,7 @@ class VoicemailEscalationCompletionMail extends BaseMailable
             ? 'Voicemail escalation accepted for mailbox '.($notification->mailbox ?? 'Unknown')
             : 'Voicemail escalation failed for mailbox '.($notification->mailbox ?? 'Unknown');
         $timezone = get_local_time_zone($notification->domain_uuid) ?? 'UTC';
+        $dateFormat = local_datetime_format($notification->domain_uuid) . ' T';
 
         $attributes = [
             'domain_uuid' => $notification->domain_uuid,
@@ -23,9 +24,7 @@ class VoicemailEscalationCompletionMail extends BaseMailable
             'caller_id_name' => $notification->caller_id_name ?? '—',
             'caller_id_number' => $notification->caller_id_number ?? '—',
             'message_length_seconds' => $notification->message_length_seconds ?? '—',
-            'message_left_at' => optional($notification->message_left_at)?->copy()
-                ->timezone($timezone)
-                ->format('Y-m-d ' . local_time_format($notification->domain_uuid) . ' T') ?? '—',
+            'message_left_at' => $notification->message_left_at?->copy()->timezone($timezone)->format($dateFormat) ?? '—',
             'accepted_by_number' => $notification->accepted_by_number ?? '—',
             'current_retry' => $notification->current_retry ?? 0,
             'current_priority' => $notification->current_priority ?? '—',
@@ -34,11 +33,11 @@ class VoicemailEscalationCompletionMail extends BaseMailable
             'tenantTimeZone' => $timezone,
             'subjectLine' => $subject,
             'statusLabel' => $statusLabel,
-            'template_logs' => $notification->logs->map(function ($log) use ($timezone) {
+            'template_logs' => $notification->logs->map(function ($log) use ($timezone, $dateFormat) {
                 $context = is_array($log->context) ? $log->context : [];
 
                 return [
-                    'time' => optional($log->created_at)?->copy()->timezone($timezone)->format('Y-m-d ' . local_time_format($notification->domain_uuid) . ' T') ?? '—',
+                    'time' => $log->created_at?->copy()->timezone($timezone)->format($dateFormat) ?? '—',
                     'level' => strtoupper($log->level ?? 'info'),
                     'message' => $log->message,
                     'destination' => $context['destination'] ?? '—',

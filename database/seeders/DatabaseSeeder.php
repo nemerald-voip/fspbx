@@ -1111,7 +1111,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name' => 'text',
                 'default_setting_value' => 'us',
                 'default_setting_enabled' => true,
-                'default_setting_description' => 'Date notation in the portal and notifications: us (Jan 31, 2026), eu (31/01/2026) or iso (2026-01-31). Accounts can override this under Account Settings.',
+                'default_setting_description' => 'Date display order. Use us for month first (Jan 31, 2026), eu for day first (31/01/2026), or iso for year first (2026-01-31).',
             ],
             [
                 'default_setting_category' => 'domain',
@@ -1119,7 +1119,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name' => 'text',
                 'default_setting_value' => '12h',
                 'default_setting_enabled' => true,
-                'default_setting_description' => 'Time notation in the portal and notifications: 12h (3:04 PM) or 24h (15:04). Accounts can override this under Account Settings.',
+                'default_setting_description' => 'Clock display. Use 12h for a 12-hour clock (3:04 PM) or 24h for a 24-hour clock (15:04).',
             ],
             [
                 'default_setting_category' => 'messaging',

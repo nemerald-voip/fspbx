@@ -17,6 +17,7 @@ use App\Models\GatewaySetting;
 use App\Models\PaymentGateway;
 use App\Models\SwitchVariable;
 use App\Models\DefaultSettings;
+use App\Support\Localization\DateTimeNotation;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Http;
@@ -960,11 +961,7 @@ if (!function_exists('local_date_format')) {
      */
     function local_date_format($domain_uuid = null, bool $long = false): string
     {
-        $formats = $long
-            ? ['us' => 'F j, Y', 'eu' => 'j F Y', 'iso' => 'Y-m-d']
-            : ['us' => 'M d, Y', 'eu' => 'd/m/Y', 'iso' => 'Y-m-d'];
-
-        return $formats[get_local_date_time_formats($domain_uuid)['date_format']];
+        return DateTimeNotation::date(get_local_date_time_formats($domain_uuid)['date_format'], $long);
     }
 }
 
@@ -974,9 +971,7 @@ if (!function_exists('local_time_format')) {
      */
     function local_time_format($domain_uuid = null, bool $seconds = true): string
     {
-        $is24h = get_local_date_time_formats($domain_uuid)['time_format'] === '24h';
-
-        return $is24h ? ($seconds ? 'H:i:s' : 'H:i') : ($seconds ? 'g:i:s A' : 'g:i A');
+        return DateTimeNotation::time(get_local_date_time_formats($domain_uuid)['time_format'], $seconds);
     }
 }
 
@@ -987,10 +982,11 @@ if (!function_exists('local_datetime_format')) {
      */
     function local_datetime_format($domain_uuid = null, bool $seconds = true): string
     {
-        $date = local_date_format($domain_uuid);
-        $time = local_time_format($domain_uuid, $seconds);
+        $formats = get_local_date_time_formats($domain_uuid);
+        $date = DateTimeNotation::date($formats['date_format']);
+        $time = DateTimeNotation::time($formats['time_format'], $seconds);
 
-        return get_local_date_time_formats($domain_uuid)['date_format'] === 'us' ? "$time $date" : "$date $time";
+        return $formats['date_format'] === 'us' ? "$time $date" : "$date $time";
     }
 }
 

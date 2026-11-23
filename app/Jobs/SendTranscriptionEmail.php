@@ -101,9 +101,12 @@ class SendTranscriptionEmail implements ShouldQueue
             }
 
             // 3. Prepare Display Data
+            $domainUuid = $transcription->domain_uuid;
+            $dateFormat = local_date_format($domainUuid, true) . ' @ ' . local_time_format($domainUuid, false);
             $data = [
+                'domain_uuid'    => $domainUuid,
                 'id'             => $transcription->uuid,
-                'date'           => $transcription->created_at->format(local_date_format(null, true) . ' @ ' . local_time_format(null, false)),
+                'date'           => $transcription->created_at->copy()->timezone(get_local_time_zone($domainUuid))->format($dateFormat),
                 'duration'       => gmdate("i:s", $resultPayload['audio_duration'] ?? 0),
                 'sentiment'      => ucfirst($summaryPayload['sentiment_overall'] ?? 'Neutral'),
                 'summary'        => $summaryPayload['summary'] ?? 'No summary available.',

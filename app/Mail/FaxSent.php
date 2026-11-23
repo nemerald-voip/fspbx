@@ -15,7 +15,10 @@ class FaxSent extends BaseMailable
             ?? 'Fax sent'
                 . ($destination ? ' to ' . $destination : '')
                 . ($pages !== '' ? ' (' . $pages . ' page' . ((string) $pages === '1' ? '' : 's') . ')' : '');
-        $attributes['fax_date'] = $attributes['fax_date'] ?? now()->format('Y-m-d H:i');
+        if (!isset($attributes['fax_date'])) {
+            $domainUuid = $attributes['domain_uuid'] ?? null;
+            $attributes['fax_date'] = now(get_local_time_zone($domainUuid))->format(local_datetime_format($domainUuid, false));
+        }
         parent::__construct($attributes);
         $this->useEmailTemplate('fax', 'sent');
     }
