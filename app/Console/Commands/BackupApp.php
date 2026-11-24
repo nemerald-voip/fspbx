@@ -3,154 +3,175 @@
 namespace App\Console\Commands;
 
 use App\Models\DefaultSettings;
+use Dotenv\Dotenv;
 use Illuminate\Console\Command;
+use Illuminate\Encryption\Encrypter;
+use Illuminate\Support\Facades\DB;
+use RuntimeException;
 use Symfony\Component\Process\Process;
 
 class BackupApp extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'app:backup';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Perform a backup of the application and database';
+    protected $description = 'Back up FS PBX files and the PostgreSQL database';
 
-    /**
-     * Execute the console command.
-     */
-    public function handle()
+    public function handle(): int
     {
-        $this->info('Starting backup...');
-
-        $now = date('Y-m-d');
-
-        // Retrieve backup path from the DefaultSettings model
-        $backupSetting = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
-            ->where('default_setting_subcategory', 'backup_path')
-            ->where('default_setting_enabled', true)
-            ->value('default_setting_value');
-
-        // Set default backup path if the setting is not found
-        $mainBackupDir = $backupSetting ?: '/var/backups/fspbx';
-
-        $backupDir = "$mainBackupDir/postgresql";
-        
-        $db = config('database.connections')[config('database.default')];
-
-        $dbHost = $db['host'];
-        $dbPort = $db['port'];
-        $dbUser = $db['username'];
-        $dbName = $db['database'];
-        $dbPassword = $db['password'];
-        $dbSchema = $db['schema'] ?? 'public';
-
-        // Create backup directories if they don't exist
-        $this->executeCommand("mkdir -p $backupDir");
-
-        // Delete old PostgreSQL backups older than 7 days if the directory exists
-        if (is_dir($backupDir)) {
-            $this->info('Cleaning up old PostgreSQL backups...');
-            // Check if any files matching the pattern exist
-            $files = glob("$backupDir/fusionpbx_pgsql*");
-            if (count($files) > 0) {
-                $this->executeCommand("find $backupDir/fusionpbx_pgsql* -mtime +7 -exec rm -f {} \\;");
-            } else {
-                $this->info("No old PostgreSQL backups found to delete.");
+        $previousMask = umask(0077);
+        $lock = null;
+        $work = null;
+        try {
+            $root = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
+                ->where('default_setting_subcategory', 'backup_path')
+                ->where('default_setting_enabled', true)->value('default_setting_value') ?: '/var/backups/fspbx';
+            if (!str_starts_with($root, '/') || rtrim($root, '/') === '') {
+                throw new RuntimeException('Choose an absolute backup directory other than /.');
             }
-        } else {
-            $this->info("Backup directory $backupDir does not exist. Skipping PostgreSQL backup cleanup.");
-        }
-
-        // Delete old main backups older than 2 days
-        if (is_dir($mainBackupDir)) {
-            $this->info('Cleaning up old main backups...');
-            // Check if any `.tgz` files exist in the directory
-            $tgzFiles = glob("$mainBackupDir/*.tgz");
-            if (count($tgzFiles) > 0) {
-                $this->executeCommand("find $mainBackupDir/*.tgz -mtime +2 -exec rm -f {} \\;");
-            } else {
-                $this->info("No old main backups found to delete.");
+            $this->directory("$root/postgresql");
+            $root = realpath($root);
+            $lock = fopen("$root/.backup.lock", 'c');
+            if (!$lock || !flock($lock, LOCK_EX | LOCK_NB)) {
+                throw new RuntimeException('Could not lock the backup directory. Check for another running backup.');
             }
-        } else {
-            $this->info("Main backup directory $mainBackupDir does not exist. Skipping main backup cleanup.");
-        }
 
+            $date = date('Y-m-d');
+            $dump = "$root/postgresql/fusionpbx_pgsql_$date.sql";
+            $archive = "$root/backup_$date.tgz";
+            $work = "$root/.building-".bin2hex(random_bytes(8));
+            $this->directory($work);
 
-        // Backup the PostgreSQL database
-        $backupFile = "$backupDir/fusionpbx_pgsql_$now.sql";
-        $this->info("Backing up PostgreSQL database to $backupFile...");
-        $this->executeCommand("export PGPASSWORD=$dbPassword && pg_dump --verbose -Fc --host=$dbHost --port=$dbPort -U $dbUser $dbName --schema=$dbSchema -f $backupFile");
-
-        // Paths to be backed up
-        $directories = [
-            '/var/www/freeswitchpbx',
-            '/var/www/fspbx',
-            '/usr/share/freeswitch',
-            '/etc/freeswitch',
-            '/usr/share/fusionpbx/templates/provision',
-            '/usr/share/fspbx/templates/provision',
-            '/var/lib/freeswitch/storage/',
-            '/var/lib/freeswitch/recordings/',
-        ];
-
-        // Check which directories exist
-        $existingDirs = array_filter($directories, function ($dir) {
-            return is_dir($dir);
-        });
-
-        // Package the backup
-        $mainBackupFile = "$mainBackupDir/backup_$now.tgz";
-
-        // Generate the tar command only for existing directories
-        $tarCommand = "tar --exclude='*/.git/*' --exclude='*/music/default/*' --exclude='*/june/*' --exclude='*/callie/*' --exclude='*/mario/*' --exclude='*/node_modules/*' --exclude='/var/www/freeswitchpbx/vendor' --exclude='/var/www/fspbx/vendor' -zvcf $mainBackupFile $backupFile " . implode(' ', $existingDirs);
-
-        $this->info("Packaging the backup into $mainBackupFile...");
-        $this->executeCommand($tarCommand);
-
-        // Keep standalone database dumps when packaging fails. After the next
-        // successful full backup, remove the current dump and any older dump
-        // left behind by an earlier failed packaging attempt.
-        $this->info('Removing standalone PostgreSQL backups...');
-
-        foreach (glob("$backupDir/fusionpbx_pgsql*") ?: [] as $standaloneBackup) {
-            if (is_file($standaloneBackup) && !unlink($standaloneBackup)) {
-                $this->error("Unable to remove standalone PostgreSQL backup $standaloneBackup.");
-
-                return self::FAILURE;
+            $db = DB::connection()->getConfig();
+            if ($db['driver'] !== 'pgsql') {
+                throw new RuntimeException('FS PBX backup requires PostgreSQL.');
             }
+            $this->info('Dumping PostgreSQL...');
+            $this->runTool(['pg_dump', '-Fc', '--no-password', '--host='.$db['host'], '--port='.$db['port'],
+                '--username='.$db['username'], '--file='.$work.'/db.partial', '--dbname='.$db['database']],
+                ['PGPASSWORD' => $db['password']]);
+            if (!rename("$work/db.partial", $dump)) {
+                throw new RuntimeException('Could not publish the standalone database dump.');
+            }
+
+            $app = '/var/www/fspbx';
+            if (!is_file("$app/artisan") || realpath($app) !== realpath(base_path())) {
+                throw new RuntimeException("The running FS PBX installation must be accessible at $app.");
+            }
+            try {
+                $dotenv = Dotenv::parse(file_get_contents("$app/.env"));
+            } catch (\Throwable) {
+                throw new RuntimeException('Unable to read and parse the source .env.');
+            }
+            $key = $dotenv['APP_KEY'] ?? '';
+            $bytes = str_starts_with($key, 'base64:') ? base64_decode(substr($key, 7), true) : $key;
+            if (is_link("$app/.env") || !$bytes || !Encrypter::supported($bytes, config('app.cipher'))
+                || !hash_equals((string) config('app.key'), $key)) {
+                throw new RuntimeException('The regular .env file must contain the active application encryption key.');
+            }
+            if (!is_dir("$app/storage/app") || !is_file("$app/config/version.php")) {
+                throw new RuntimeException('Missing application storage or release information.');
+            }
+            $media = ['/var/lib/freeswitch/storage', '/var/lib/freeswitch/recordings'];
+            $paths = [
+                '/usr/share/freeswitch', '/etc/freeswitch', ...$media, '/var/lib/freeswitch/images',
+                '/usr/share/fusionpbx/templates/provision', '/usr/share/fspbx/templates/provision',
+                '/etc/fusionpbx', '/etc/nginx/sites-available', '/etc/nginx/ssl',
+                '/etc/dehydrated', '/etc/letsencrypt', '/etc/iptables',
+            ];
+            $paths = array_values(array_filter($paths, 'is_dir'));
+            foreach ([$app, ...$paths] as $path) {
+                $source = realpath($path);
+                if ($source === $root || str_starts_with($source.'/', $root.'/') || str_starts_with($root.'/', $source.'/')) {
+                    throw new RuntimeException('Choose a backup directory outside the PBX source directories.');
+                }
+            }
+            $manifest = [
+                'format' => 1,
+                'release' => config('version.release'),
+                'app' => ltrim($app, '/'),
+                'dump' => ltrim($dump, '/'),
+                'cluster' => DB::scalar("SELECT CASE WHEN has_function_privilege('pg_control_system()', 'EXECUTE')
+                    THEN (SELECT system_identifier::text FROM pg_control_system()) END"),
+                'cipher' => config('app.cipher'),
+                'key_hash' => hash('sha256', (string) config('app.key')),
+                'media' => array_values(array_map(fn ($path) => ltrim($path, '/'), array_filter($media, 'is_dir'))),
+                'modules' => array_map(fn ($file) => basename(dirname($file)), glob("$app/Modules/*/module.json") ?: []),
+            ];
+            foreach (array_diff($media, $paths) as $missing) {
+                $this->warn("$missing is absent. Verify any external media storage has its own backup.");
+            }
+            if (file_put_contents("$work/fspbx-migration.json", json_encode($manifest, JSON_THROW_ON_ERROR)) === false) {
+                throw new RuntimeException('Could not write migration metadata.');
+            }
+
+            $this->info("Packaging $archive ...");
+            $this->package($work, $app, '/', [ltrim($dump, '/'), ...array_map(fn ($path) => ltrim($path, '/'), $paths)]);
+            if (!rename("$work/archive.partial", $archive)) {
+                throw new RuntimeException('Could not publish the completed archive.');
+            }
+
+            foreach (glob("$root/backup_????-??-??.tgz") ?: [] as $older) {
+                if ($older !== $archive && filemtime($older) < time() - 3 * 86400 && !unlink($older)) {
+                    throw new RuntimeException("Could not remove old archive $older.");
+                }
+            }
+            foreach (glob("$root/postgresql/fusionpbx_pgsql_*.sql") ?: [] as $standalone) {
+                if (!unlink($standalone)) {
+                    throw new RuntimeException("Could not remove standalone dump $standalone.");
+                }
+            }
+            $this->info("Backup complete: $archive");
+            return self::SUCCESS;
+        } catch (\Throwable $exception) {
+            $this->error($exception->getMessage());
+            return self::FAILURE;
+        } finally {
+            if ($work !== null) {
+                foreach (['db.partial', 'archive.partial', 'fspbx-migration.json'] as $name) {
+                    if (is_file("$work/$name")) {
+                        unlink("$work/$name");
+                    }
+                }
+                if (is_dir($work)) {
+                    rmdir($work);
+                }
+            }
+            if (is_resource($lock)) {
+                fclose($lock);
+            }
+            umask($previousMask);
         }
-
-        $this->info('Backup completed successfully!');
-
-        return self::SUCCESS;
     }
 
-    /**
-     * Execute a shell command with optional timeout.
-     */
-    protected function executeCommand($command, $timeout = 3600)
+    private function directory(string $path): void
     {
-        $process = Process::fromShellCommandline($command);
-        $process->setTimeout($timeout);
-        // $process->setTty(true); // Preserve color output
-        $process->run(function ($type, $buffer) {
-            if (Process::ERR === $type) {
-                $this->error($buffer);
-            } else {
-                $this->output->write($buffer);
-            }
-        });
+        if (!is_dir($path) && !mkdir($path, 0700, true) && !is_dir($path)) {
+            throw new RuntimeException("Could not create $path.");
+        }
+    }
 
+    private function package(string $work, string $app, string $filesystem, array $members): void
+    {
+        $command = ['tar', '--create', '--gzip', '--file='.$work.'/archive.partial', '--hard-dereference',
+            '--transform=flags=r;s|^\./|var/www/fspbx/|;s|^\.$|var/www/fspbx|',
+            '--exclude=.git', '--exclude=node_modules', '--exclude=./vendor',
+            '--exclude=./storage/logs', '--exclude=./storage/framework',
+            '--exclude=usr/share/freeswitch/sounds/music/default/*'];
+        foreach (['callie', 'june', 'mario'] as $voice) {
+            $command[] = "--exclude=usr/share/freeswitch/sounds/*/$voice/*";
+        }
+        // Enter the app root to archive its contents even when the install path is a symlink.
+        $this->runTool([...$command, '-C', $work, 'fspbx-migration.json', '-C', $filesystem,
+            ...$members, '-C', $app, '.']);
+    }
+
+    private function runTool(array $arguments, array $environment = []): void
+    {
+        $process = new Process($arguments, null, $environment);
+        $process->setTimeout(null);
+        $process->run();
         if (!$process->isSuccessful()) {
-            $this->error("Command '$command' failed.");
-            exit(1);
+            throw new RuntimeException($arguments[0].' failed: '.trim($process->getErrorOutput()));
         }
     }
 }
