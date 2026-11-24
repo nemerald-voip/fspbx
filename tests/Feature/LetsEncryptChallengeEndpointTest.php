@@ -3,9 +3,6 @@
 namespace Tests\Feature;
 
 use App\Services\LetsEncryptService;
-use Illuminate\Cache\ArrayStore;
-use Illuminate\Cache\RateLimiter;
-use Illuminate\Cache\Repository;
 use Mockery;
 use Tests\TestCase;
 
@@ -21,7 +18,6 @@ class LetsEncryptChallengeEndpointTest extends TestCase
             'session.driver' => 'array',
         ]);
         app('log')->setDefaultDriver('stderr');
-        $this->app->instance(RateLimiter::class, new RateLimiter(new Repository(new ArrayStore())));
     }
 
     public function test_peer_can_present_an_authenticated_challenge_token(): void

@@ -74,6 +74,7 @@ The project continues to evolve as more FusionPBX-era functionality is redesigne
 Before installing FS PBX, make sure the server meets these minimum requirements:
 
 - **Debian 12 or Debian 13**
+- **PHP 8.4.27 minimum** for CLI and PHP-FPM. The installer configures PHP 8.4.
 - **4 GB RAM**
 - **30 GB disk space**
 
@@ -110,6 +111,8 @@ If you receive a **419 Page Expired** response, see:
 [Troubleshooting Error 419 (Page Expired)](https://github.com/nemerald-voip/fspbx/wiki/Troubleshooting-Error-419-(Page-Expired))
 
 ## Updating
+
+If your server runs PHP 8.4 below 8.4.27, run `sudo bash /var/www/fspbx/install/install_php.sh --upgrade-only` before updating FS PBX. For existing Debian servers on PHP 8.1, use `sudo bash /var/www/fspbx/install/upgrade_php_8_1_to_8_4.sh` to upgrade the CLI and PHP-FPM first.
 
 From the FS PBX installation directory:
 

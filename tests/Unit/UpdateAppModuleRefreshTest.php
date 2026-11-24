@@ -24,6 +24,8 @@ use Symfony\Component\Console\Output\BufferedOutput;
 
 class UpdateAppModuleRefreshTest extends TestCase
 {
+    private const PLATFORM_CHECK = 'composer check-platform-reqs --lock --no-interaction --format=json';
+
     private string $directory;
     private Application $app;
     private BufferedOutput $output;
@@ -44,7 +46,7 @@ class UpdateAppModuleRefreshTest extends TestCase
         Facade::clearResolvedInstances();
         Facade::setFacadeApplication($this->app);
         Module::swap(\Mockery::mock());
-        Process::fake();
+        Process::fake([self::PLATFORM_CHECK => Process::result()]);
         Process::preventStrayProcesses();
         $this->output = new BufferedOutput();
     }
@@ -94,6 +96,59 @@ class UpdateAppModuleRefreshTest extends TestCase
         return $command;
     }
 
+    public function test_laravel_10_hands_the_update_to_a_fresh_process_before_running_hooks(): void
+    {
+        Process::fake([self::PLATFORM_CHECK => Process::result(
+            output: '[{"name":"ext-curl","status":"success"}]',
+            errorOutput: 'Checking platform requirements using the lock file',
+        )]);
+        $framework = $this->createMock(Application::class);
+        $framework->method('version')->willReturn('10.50.0');
+        $command = $this->command();
+        $command->setLaravel($framework);
+
+        $this->assertSame(0, $command->handle());
+        $this->assertSame([
+            'php artisan frontend:install --prepare',
+            'composer install --no-interaction',
+            'FSPBX_LARAVEL_11_UPGRADE=1 php artisan app:update',
+        ], $command->shellCommands);
+        $this->assertSame([], $command->artisanCommands);
+        Process::assertRan(self::PLATFORM_CHECK);
+        $output = $this->output->fetch();
+        $this->assertStringNotContainsString('ext-curl', $output);
+        $this->assertStringNotContainsString('Checking platform requirements', $output);
+    }
+
+    public function test_only_failed_and_missing_platform_requirements_are_reported_before_the_update(): void
+    {
+        $checks = [
+            ['name' => 'ext-curl', 'version' => '8.4.26', 'status' => 'success', 'failed_requirement' => null],
+            ['name' => 'php', 'version' => '8.4.26', 'status' => 'failed', 'failed_requirement' => ['source' => 'laravel/laravel', 'constraint' => '^8.4.27']],
+            ['name' => 'ext-ldap', 'version' => 'n/a', 'status' => 'missing', 'failed_requirement' => ['source' => 'laravel/laravel', 'constraint' => '*']],
+        ];
+        Process::fake([self::PLATFORM_CHECK => Process::result(output: json_encode($checks), exitCode: 2)]);
+        $command = $this->command();
+
+        $this->assertSame(1, $command->handle());
+        $output = $this->output->fetch();
+        $this->assertStringContainsString('laravel/laravel requires php ^8.4.27 (installed 8.4.26)', $output);
+        $this->assertStringContainsString('laravel/laravel requires ext-ldap * (missing)', $output);
+        $this->assertStringNotContainsString('ext-curl', $output);
+        $this->assertSame([], $command->shellCommands);
+        $this->assertSame([], $command->artisanCommands);
+    }
+
+    public function test_composer_errors_are_reported_when_the_platform_check_cannot_run(): void
+    {
+        Process::fake([self::PLATFORM_CHECK => Process::result(errorOutput: 'Invalid lock file', exitCode: 1)]);
+        $command = $this->command();
+
+        $this->assertSame(1, $command->handle());
+        $this->assertStringContainsString('Invalid lock file', $this->output->fetch());
+        $this->assertSame([], $command->shellCommands);
+    }
+
     /**
      * @dataProvider unusableLicenses
      * @runInSeparateProcess
@@ -139,11 +194,12 @@ class UpdateAppModuleRefreshTest extends TestCase
         $this->assertContains('php artisan route:cache', $command->shellCommands);
         $this->assertContains('php artisan db:seed --force', $command->shellCommands);
         $this->assertSame('php artisan frontend:install --prepare', $command->shellCommands[0]);
+        $this->assertContains('composer install --no-interaction', $command->shellCommands);
         $this->assertContains('php artisan frontend:install --activate', $command->shellCommands);
         $this->assertNotContains('npm run build', $command->shellCommands);
         $this->assertNotContains('npm install', $command->shellCommands);
         $this->assertContains('horizon:terminate', $command->artisanCommands);
-        Process::assertNothingRan();
+        Process::assertRan(self::PLATFORM_CHECK);
     }
 
     public static function unusableLicenses(): array
@@ -185,7 +241,7 @@ class UpdateAppModuleRefreshTest extends TestCase
         } else {
             $this->assertStringNotContainsString('Continuing the application update', $output);
         }
-        Process::assertNothingRan();
+        Process::assertRan(self::PLATFORM_CHECK);
     }
 
     public static function refreshOutcomes(): array

@@ -137,7 +137,7 @@ class SyncthingNetworkRepairTest extends TestCase
         (new Filesystem())->deleteDirectory($this->root);
     }
 
-    public static function result(string $stdout = '', int $code = 0): array
+    public static function commandResult(string $stdout = '', int $code = 0): array
     {
         return ['stdout' => $stdout, 'stderr' => '', 'code' => $code];
     }
@@ -159,10 +159,10 @@ class SyncthingNetworkRepairTest extends TestCase
         file_put_contents($path, $core);
         touch($path, 1);
         $this->repair->run = fn ($args) => match ($args[0]) {
-            'ss' => self::result($sockets),
-            'pgrep' => self::result((string) getmypid()),
+            'ss' => self::commandResult($sockets),
+            'pgrep' => self::commandResult((string) getmypid()),
             'getconf' => (new Repair())->command($args),
-            'fs_cli' => self::result($args[2] === 'global_getvar conf_dir' ? $this->root.'/fs' : $core),
+            'fs_cli' => self::commandResult($args[2] === 'global_getvar conf_dir' ? $this->root.'/fs' : $core),
             default => throw new RuntimeException('Unexpected command'),
         };
         return $path;
@@ -204,7 +204,7 @@ class SyncthingNetworkRepairTest extends TestCase
     /** @dataProvider unaffectedSockets */
     public function test_unaffected_hosts_have_no_side_effects(string $sockets): void
     {
-        $this->repair->run = fn ($args) => self::result($sockets);
+        $this->repair->run = fn ($args) => self::commandResult($sockets);
         $this->repair->repair();
         $this->assertSame([['ss', '-H', '-u', '-a', '-n', '-p']], $this->repair->commands);
         $this->assertDirectoryDoesNotExist($this->repair->stateDir);
@@ -333,19 +333,19 @@ class SyncthingNetworkRepairTest extends TestCase
         file_put_contents($this->repair->rulesDir.'/rules.v4', "*filter\n:INPUT DROP [0:0]\nCOMMIT\n");
         $this->repair->run = function ($args) use ($api) {
             if ($args[0] === 'ss') {
-                return self::result('LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))');
+                return self::commandResult('LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))');
             }
             if ($args[0] === 'supervisorctl') {
                 if ($args[1] === 'restart') {
                     $api->afterRestart = true;
                 }
-                return self::result('syncthing RUNNING pid 123, uptime 1:00:00');
+                return self::commandResult('syncthing RUNNING pid 123, uptime 1:00:00');
             }
             if ($args[0] === 'systemctl') {
-                return self::result($args[1] === 'is-enabled' ? 'enabled' : '', $args[1] === 'is-enabled' ? 0 : 3);
+                return self::commandResult($args[1] === 'is-enabled' ? 'enabled' : '', $args[1] === 'is-enabled' ? 0 : 3);
             }
             $this->assertContains($args[0], ['iptables-restore', 'iptables']);
-            return self::result('', ($args[3] ?? '') === '-C' ? 1 : 0);
+            return self::commandResult('', ($args[3] ?? '') === '-C' ? 1 : 0);
         };
         return $api;
     }
@@ -431,7 +431,7 @@ class SyncthingNetworkRepairTest extends TestCase
         $this->repair->conflict = ['pid' => 123];
         $this->repair->run = function ($args) {
             $this->assertSame(['ss', '-H', '-t', '-l', '-n', '-p'], $args);
-            return self::result('LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))');
+            return self::commandResult('LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))');
         };
         $this->assertTrue($this->repair->apply());
         $this->assertStringContainsString('No usable peer IP', ob_get_contents());
@@ -506,7 +506,7 @@ class SyncthingNetworkRepairTest extends TestCase
         $live = false;
         $this->repair->run = function ($args, $input) use ($fail, &$live) {
             if ($args[0] === 'systemctl') {
-                return self::result($args[1] === 'is-enabled' ? 'enabled' : '', $args[1] === 'is-enabled' ? 0 : 3);
+                return self::commandResult($args[1] === 'is-enabled' ? 'enabled' : '', $args[1] === 'is-enabled' ? 0 : 3);
             }
             if ($args[0] === 'iptables-restore') {
                 $this->assertStringContainsString('--dport 22000', $input);
@@ -514,15 +514,15 @@ class SyncthingNetworkRepairTest extends TestCase
                     throw new RuntimeException('Invalid saved rules');
                 }
             } elseif ($args[0] === 'iptables' && $args[3] === '-S') {
-                return self::result('-P INPUT DROP');
+                return self::commandResult('-P INPUT DROP');
             } elseif ($args[0] === 'iptables' && $args[3] === '-C') {
-                return self::result('', $live ? 0 : 1);
+                return self::commandResult('', $live ? 0 : 1);
             } elseif ($args[0] === 'iptables' && $args[3] === '-I') {
                 $live = true;
             } else {
                 $this->fail('Unexpected firewall command');
             }
-            return self::result();
+            return self::commandResult();
         };
         if ($fail) {
             $this->expectExceptionMessage('Invalid saved rules');
@@ -601,26 +601,26 @@ class SyncthingNetworkRepairTest extends TestCase
                 // Model fspbx02: netfilter-persistent enabled, UFW's unit
                 // active/exited, and no UFW executable. Never run ufw itself.
                 if ($args === ['systemctl', 'is-enabled', 'netfilter-persistent']) {
-                    return self::result('enabled');
+                    return self::commandResult('enabled');
                 }
                 $this->assertSame('is-active', $args[1]);
-                return self::result($args[2] === 'ufw' ? 'active' : 'inactive', $args[2] === 'ufw' ? 0 : 3);
+                return self::commandResult($args[2] === 'ufw' ? 'active' : 'inactive', $args[2] === 'ufw' ? 0 : 3);
             }
             if (in_array($args[0], ['iptables-restore', 'ip6tables-restore'], true)) {
                 $this->assertSame('--test', $args[1]);
-                return self::result();
+                return self::commandResult();
             }
             $this->assertContains($args[0], ['iptables', 'ip6tables']);
             if ($args[3] === '-S') {
                 $family = $args[0] === 'iptables' ? 4 : 6;
-                return self::result("-P INPUT DROP\n".($chains === 'live'.$family ? "-N ufw-user-input\n" : ''));
+                return self::commandResult("-P INPUT DROP\n".($chains === 'live'.$family ? "-N ufw-user-input\n" : ''));
             }
             if ($args[3] === '-C') {
-                return self::result('', isset($inserted[$args[0]]) ? 0 : 1);
+                return self::commandResult('', isset($inserted[$args[0]]) ? 0 : 1);
             }
             $this->assertSame('-I', $args[3]);
             $inserted[$args[0]] = true;
-            return self::result();
+            return self::commandResult();
         };
         $failure = null;
         try {
@@ -693,7 +693,7 @@ class SyncthingNetworkRepairTest extends TestCase
         $this->repair->run = function ($args) use ($api) {
             $this->assertSame(['supervisorctl', 'restart', 'syncthing'], $args);
             $api->afterRestart = true; // Any further API call fails the test.
-            return self::result();
+            return self::commandResult();
         };
         $this->repair->configure($api, $state);
         $this->assertSame('complete', $this->repair->load()['phase']);
@@ -720,7 +720,7 @@ class SyncthingNetworkRepairTest extends TestCase
                 throw new RuntimeException('Restart failed');
             }
             $this->assertContains($args[1], ['stop', 'start']);
-            return self::result();
+            return self::commandResult();
         };
         $this->expectExceptionMessage($apiFailure ? 'API unavailable' : 'Restart failed');
         try {
@@ -744,9 +744,9 @@ class SyncthingNetworkRepairTest extends TestCase
         $state['phase'] = 'applying';
         $state['before'] = ['options' => $api->options, 'addresses' => ['PEER' => ['dynamic']]];
         $this->repair->run = fn ($args) => match ($args[1]) {
-            'stop' => self::result('', 2),
-            'status' => self::result('syncthing STOPPED Not started', 3),
-            'start' => self::result(),
+            'stop' => self::commandResult('', 2),
+            'status' => self::commandResult('syncthing STOPPED Not started', 3),
+            'start' => self::commandResult(),
         };
         $this->repair->rollback($state);
         $this->assertSame('rolled-back', $this->repair->load()['phase']);
@@ -775,7 +775,7 @@ class SyncthingNetworkRepairTest extends TestCase
             123 => ['name' => 'syncthing', 'parent' => 1, 'uid' => 33, 'binary' => [8, 1234]],
             456 => ['name' => 'syncthing', 'parent' => 1, 'uid' => 33, 'binary' => [8, 1234]],
         ];
-        $this->repair->run = fn ($args) => self::result(match ($args[0]) {
+        $this->repair->run = fn ($args) => self::commandResult(match ($args[0]) {
             'ss' => 'LISTEN 0 4096 *:8384 *:* users:(("syncthing",pid=123,fd=34))',
             'supervisorctl' => 'syncthing RUNNING pid 456, uptime 1:00:00',
             default => throw new RuntimeException('Unexpected command'),

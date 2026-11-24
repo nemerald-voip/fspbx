@@ -30,7 +30,7 @@ class CallCenterAgentDeletionTest extends TestCase
 
     public function createApplication()
     {
-        if ($this->getName(false) !== 'test_basic_deletion_and_extension_listener_work_without_optional_modules') {
+        if ($this->name() !== 'test_basic_deletion_and_extension_listener_work_without_optional_modules') {
             return parent::createApplication();
         }
 

@@ -390,7 +390,7 @@ class InboundMessageWebhookTest extends TestCase
         $this->assertFalse($history[0]['options']['allow_redirects']);
         $this->assertArrayHasKey(CURLOPT_RESOLVE, $history[0]['options']['curl']);
         $listener = app(RecordMessageWebhookResult::class);
-        $listener->handle($this->result($job, FinalWebhookCallFailedEvent::class));
+        $listener->handle($this->webhookResult($job, FinalWebhookCallFailedEvent::class));
         $this->assertSame('delivered', data_get(Messages::sole()->delivery_meta, 'webhook.status'));
     }
 
@@ -400,7 +400,7 @@ class InboundMessageWebhookTest extends TestCase
         $this->receive();
         $job = $this->job();
         $eventId = $job->uuid;
-        $event = $this->result($job, WebhookCallSucceededEvent::class);
+        $event = $this->webhookResult($job, WebhookCallSucceededEvent::class);
         $event->meta['domain_uuid'] = self::OTHER;
         app(RecordMessageWebhookResult::class)->handle($event);
         $this->assertSame('queued', data_get(Messages::sole()->delivery_meta, 'webhook.status'));
@@ -527,7 +527,7 @@ class InboundMessageWebhookTest extends TestCase
         $this->assertSame(hash_hmac('sha256', json_encode($payload), 'call-secret'), $job->headers['Signature']);
         $this->assertContains('call-webhook', $job->tags);
         $this->assertStringEndsWith('-Call-Webhooks/1.0', $job->headers['User-Agent']);
-        app(RecordMessageWebhookResult::class)->handle($this->result($job, WebhookCallSucceededEvent::class));
+        app(RecordMessageWebhookResult::class)->handle($this->webhookResult($job, WebhookCallSucceededEvent::class));
         $this->assertSame(0, Messages::count());
     }
 
@@ -553,7 +553,7 @@ class InboundMessageWebhookTest extends TestCase
         $this->app->instance(Client::class, new Client(['handler' => $handler]));
     }
 
-    private function result(SafeCallWebhookJob $job, string $class)
+    private function webhookResult(SafeCallWebhookJob $job, string $class)
     {
         return new $class('POST', $job->webhookUrl, $job->payload, $job->headers, $job->meta, $job->tags,
             1, new Response(200), null, null, $job->uuid, null);

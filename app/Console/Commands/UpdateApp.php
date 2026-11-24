@@ -122,6 +122,11 @@ class UpdateApp extends Command
     {
         $this->info('Starting update...');
 
+        // Check the incoming lock before applying hooks or recording a new version.
+        if (! $this->platformRequirementsMet()) {
+            return self::FAILURE;
+        }
+
         $currentVersion = config('app.version');
 
         // Always get latest version directly from the file (not the config cache)
@@ -132,6 +137,16 @@ class UpdateApp extends Command
         // Verify the release before update hooks, seeders, or service changes.
         // Never turn a missing artifact into an automatic production build.
         $this->executeCommand('php artisan frontend:install --prepare', 240);
+
+        // Never run update hooks against a mixture of Laravel 10 classes in
+        // memory and Laravel 11 classes on disk after Composer replaces vendor.
+        if (version_compare($this->laravel->version(), '11.0.0', '<')) {
+            $this->info('Installing Laravel 11 and restarting the updater...');
+            $this->executeCommand('composer install --no-interaction', 300);
+            $this->executeCommand('FSPBX_LARAVEL_11_UPGRADE=1 php artisan app:update', null);
+
+            return self::SUCCESS;
+        }
 
         // Define version-specific steps using an array
         $updateSteps = [
@@ -222,7 +237,10 @@ class UpdateApp extends Command
             // Add more versions as needed
         ];
 
-        $supervisorProgramsToRestart = [];
+        $frameworkUpgraded = getenv('FSPBX_LARAVEL_11_UPGRADE') === '1';
+        $supervisorProgramsToRestart = $frameworkUpgraded
+            ? ['reverb', 'fs-cdr-service', 'fs-esl-listener-emergency', 'fs-esl-listener-call-webhooks']
+            : [];
 
         foreach ($updateSteps as $version => $updateClass) {
             if (version_compare($currentVersion, $version, '<')) {
@@ -256,8 +274,9 @@ class UpdateApp extends Command
         }
 
         // Composer install
-        $this->executeCommand('composer install --no-interaction --ignore-platform-reqs');
-        $this->executeCommand('composer dump-autoload --no-interaction --ignore-platform-reqs');
+        if (! $frameworkUpgraded) {
+            $this->executeCommand('composer install --no-interaction', 300);
+        }
 
         // Cache config and routes
         $this->executeCommand('php artisan config:cache');
@@ -320,6 +339,28 @@ class UpdateApp extends Command
         }
 
         $this->info('Update completed successfully!');
+    }
+
+    private function platformRequirementsMet(): bool
+    {
+        $result = LaravelProcess::path(base_path())->run('composer check-platform-reqs --lock --no-interaction --format=json');
+        if ($result->successful()) {
+            return true;
+        }
+
+        $checks = json_decode($result->output(), true);
+        $failures = collect($checks)->whereIn('status', ['failed', 'missing']);
+        if ($failures->isEmpty()) {
+            $this->error(trim($result->errorOutput()) ?: 'Composer could not check the platform requirements.');
+        }
+
+        foreach ($failures as $check) {
+            $required = $check['failed_requirement'];
+            $installed = $check['status'] === 'missing' ? 'missing' : "installed {$check['version']}";
+            $this->error("{$required['source']} requires {$check['name']} {$required['constraint']} ({$installed}).");
+        }
+
+        return false;
     }
 
     protected function executeCommand($command, $timeout = 60, $failOnError = true)

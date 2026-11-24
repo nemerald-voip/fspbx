@@ -483,6 +483,9 @@ const executeBulkAction = (action) => {
         }).catch((error) => {
             handleClearSelection();
             handleModalClose();
+            if (error.response?.data?.accepted?.length || error.response?.data?.cleared?.length) {
+                scheduleActionRefresh();
+            }
             handleErrorResponse(error);
         });
 }

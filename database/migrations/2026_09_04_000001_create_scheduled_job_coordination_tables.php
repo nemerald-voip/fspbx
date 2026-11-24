@@ -83,6 +83,12 @@ return new class extends Migration
     public function down(): void
     {
         if (Schema::hasTable('ldap_sync_runs')) {
+            foreach (['scheduled_job_execution_uuid', 'node_id'] as $column) {
+                $index = "ldap_sync_runs_{$column}_index";
+                if (Schema::hasIndex('ldap_sync_runs', $index)) {
+                    Schema::table('ldap_sync_runs', fn (Blueprint $table) => $table->dropIndex($index));
+                }
+            }
             foreach (['node_name', 'scheduled_job_execution_uuid', 'node_id', 'ownership_generation'] as $column) {
                 if (Schema::hasColumn('ldap_sync_runs', $column)) {
                     Schema::table('ldap_sync_runs', function (Blueprint $table) use ($column) {

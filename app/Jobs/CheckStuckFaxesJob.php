@@ -234,7 +234,7 @@ class CheckStuckFaxesJob implements ShouldQueue
                 ? max(self::PHASE_C_MIN_SECONDS, $fax->total_pages * self::SECONDS_PER_PAGE)
                 : self::PHASE_C_UNKNOWN_PAGES_FALLBACK;
 
-            $sendingFor = now()->diffInSeconds($fax->retry_at);
+            $sendingFor = $fax->retry_at->diffInSeconds(now(), false);
             if ($sendingFor < $budget) {
                 continue;
             }

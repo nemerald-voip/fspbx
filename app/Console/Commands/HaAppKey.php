@@ -23,26 +23,26 @@ class HaAppKey extends Command
         try {
             $operation = $this->argument('operation');
             if (! in_array($operation, ['export', 'check', 'import', 'verify'], true)) {
-                return $this->fail('Unsupported operation. Use export, check, import, or verify.');
+                return $this->reportFailure('Unsupported operation. Use export, check, import, or verify.');
             }
 
             $envPath = $this->laravel->environmentFilePath();
             $root = dirname($envPath);
             if (basename($envPath) !== '.env' || ! is_file($envPath)
                 || is_link($envPath) || ! is_readable($envPath)) {
-                return $this->fail('A readable, regular .env file is required. Configure custom environment files manually.');
+                return $this->reportFailure('A readable, regular .env file is required. Configure custom environment files manually.');
             }
 
             $contents = file_get_contents($envPath);
             $env = Dotenv::parse($contents);
             $pattern = '/^[\t ]*(?:export[\t ]+)?APP_KEY[\t ]*=[^\r\n]*/m';
             if (preg_match_all($pattern, $contents, $matches) !== 1) {
-                return $this->fail('The .env file must contain exactly one APP_KEY assignment.');
+                return $this->reportFailure('The .env file must contain exactly one APP_KEY assignment.');
             }
             // Replacing a multiline or interpolated key could damage other settings.
             $keyLine = Dotenv::parse($matches[0][0]);
             if (($keyLine['APP_KEY'] ?? null) !== ($env['APP_KEY'] ?? null)) {
-                return $this->fail('APP_KEY must be a literal value on one line.');
+                return $this->reportFailure('APP_KEY must be a literal value on one line.');
             }
 
             $config = $this->laravel['config']->get('app');
@@ -53,7 +53,7 @@ class HaAppKey extends Command
             if ($operation === 'export') {
                 $effectiveKey = $this->decodeKey($config['key'] ?? null, $cipher);
                 if (! hash_equals($envKey, $effectiveKey)) {
-                    return $this->fail('The primary .env key differs from its effective configuration. Resolve the cached or environment override before retrying.');
+                    return $this->reportFailure('The primary .env key differs from its effective configuration. Resolve the cached or environment override before retrying.');
                 }
 
                 // The script captures this secret payload and sends it through SSH stdin.
@@ -68,14 +68,14 @@ class HaAppKey extends Command
             $stage = 'Unable to validate the primary application key.';
             $payload = json_decode(stream_get_contents(STDIN), true, flags: JSON_THROW_ON_ERROR);
             if (($payload['cipher'] ?? null) !== $cipher) {
-                return $this->fail('The two nodes use different encryption ciphers.');
+                return $this->reportFailure('The two nodes use different encryption ciphers.');
             }
             $primaryKey = $this->decodeKey($payload['key'] ?? null, $cipher);
 
             if ($operation === 'verify') {
                 if (! hash_equals($primaryKey, $envKey)
                     || ! hash_equals($primaryKey, $this->decodeKey($config['key'] ?? null, $cipher))) {
-                    return $this->fail('The standby is not using the primary application key. Check configuration and environment overrides.');
+                    return $this->reportFailure('The standby is not using the primary application key. Check configuration and environment overrides.');
                 }
 
                 return self::SUCCESS;
@@ -83,7 +83,7 @@ class HaAppKey extends Command
 
             if (! is_writable($root) || ! is_writable($envPath)
                 || (file_exists($cachePath) && ! is_writable(dirname($cachePath)))) {
-                return $this->fail('The standby .env file or configuration cache cannot be updated.');
+                return $this->reportFailure('The standby .env file or configuration cache cannot be updated.');
             }
             if ($operation === 'check') {
                 return self::SUCCESS;
@@ -95,7 +95,7 @@ class HaAppKey extends Command
                 $backup = $envPath.'.ha-backup-'.gmdate('YmdHis').'-'.bin2hex(random_bytes(4));
                 $handle = fopen($backup, 'x');
                 if ($handle === false || fwrite($handle, $contents) !== strlen($contents)) {
-                    return $this->fail('Could not save the standby .env backup; the key was not changed.');
+                    return $this->reportFailure('Could not save the standby .env backup; the key was not changed.');
                 }
                 fclose($handle);
 
@@ -106,7 +106,7 @@ class HaAppKey extends Command
                     || ! chown($temporary, $metadata['uid']) || ! chgrp($temporary, $metadata['gid'])
                     || ! chmod($temporary, $metadata['mode'] & 0777)
                     || file_get_contents($envPath) !== $contents || ! rename($temporary, $envPath)) {
-                    return $this->fail('Could not replace .env; retain the .env.ha-backup file and inspect permissions before retrying.');
+                    return $this->reportFailure('Could not replace .env; retain the .env.ha-backup file and inspect permissions before retrying.');
                 }
                 $temporary = null;
                 $this->info("Standby .env backup saved to {$backup} (owner-only access).");
@@ -114,18 +114,18 @@ class HaAppKey extends Command
 
             $stage = 'The key is saved, but the standby configuration cache could not be cleared. Clear it before continuing.';
             if ($this->callSilent('config:clear') !== self::SUCCESS) {
-                return $this->fail($stage);
+                return $this->reportFailure($stage);
             }
             clearstatcache(true, $cachePath);
             if (file_exists($cachePath)) {
-                return $this->fail($stage);
+                return $this->reportFailure($stage);
             }
             $this->info('Standby APP_KEY synchronized; cached configuration cleared.');
 
             return self::SUCCESS;
         } catch (Throwable $exception) {
             // Parser/crypto exceptions may contain credentials. Never print their messages.
-            return $this->fail($stage);
+            return $this->reportFailure($stage);
         } finally {
             if (is_string($temporary) && is_file($temporary)) {
                 unlink($temporary);
@@ -146,7 +146,7 @@ class HaAppKey extends Command
         return $key;
     }
 
-    private function fail(string $message): int
+    private function reportFailure(string $message): int
     {
         $this->output->getErrorStyle()->error($message);
 

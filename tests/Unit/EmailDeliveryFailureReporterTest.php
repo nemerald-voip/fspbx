@@ -72,7 +72,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
         ]);
         $this->handler->report($exception);
 
-        $output = $this->output();
+        $output = $this->loggedOutput();
         $this->assertSame(1, substr_count($output, "\n"));
         $this->assertStringContainsString('MAIL_ALL_TRANSPORTS_FAILED', $output);
         $this->assertStringContainsString('voicemail-message-id', $output);
@@ -90,7 +90,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
 
         $this->handler->report($exception);
 
-        $output = $this->output();
+        $output = $this->loggedOutput();
         $this->assertSame(1, substr_count($output, "\n"));
         $this->assertStringContainsString('MAIL_RECIPIENT_SUPPRESSED', $output);
         $this->assertStringContainsString('"provider_code":406', $output);
@@ -110,7 +110,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
         $this->handler->report($exception);
         $this->handler->report(new TransportException('No transports found.'));
 
-        $lines = explode("\n", trim($this->output()));
+        $lines = explode("\n", trim($this->loggedOutput()));
         $this->assertCount(2, $lines);
         $this->assertStringContainsString('email-log-id', $lines[0]);
         $this->assertStringContainsString('recipient@example.test', $lines[0]);
@@ -126,7 +126,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
     {
         $this->handler->report(new TransportException($message));
 
-        $this->assertStringContainsString('"code":"'.$code.'"', $this->output());
+        $this->assertStringContainsString('"code":"'.$code.'"', $this->loggedOutput());
     }
 
     public static function transportErrors(): array
@@ -145,7 +145,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
         $this->handler->report(new TransportException($message));
         $this->handler->report(new TransportException($message));
 
-        $output = $this->output();
+        $output = $this->loggedOutput();
         $this->assertSame(2, substr_count($output, "\n"));
         $this->assertLessThan(1500, strlen($output));
     }
@@ -154,7 +154,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
     {
         $this->handler->report(new RuntimeException('Unexpected template failure.'));
 
-        $output = $this->output();
+        $output = $this->loggedOutput();
         $this->assertStringContainsString('Unexpected template failure.', $output);
         $this->assertStringContainsString('stacktrace', $output);
         $this->assertStringNotContainsString('Email delivery failed', $output);
@@ -203,7 +203,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
 
         $this->assertSame($exception, $observed);
         $this->assertSame($exhausted, $failed);
-        $this->assertSame(1, substr_count($this->output(), "\n"));
+        $this->assertSame(1, substr_count($this->loggedOutput(), "\n"));
     }
 
     public static function queueAttempts(): array
@@ -214,7 +214,7 @@ class EmailDeliveryFailureReporterTest extends TestCase
         ];
     }
 
-    private function output(): string
+    private function loggedOutput(): string
     {
         rewind($this->stream);
 

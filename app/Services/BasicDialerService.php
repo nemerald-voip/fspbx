@@ -631,7 +631,7 @@ class BasicDialerService
 
             $nextPacingSlot = (clone $campaign->last_run_at)->addSeconds((int) $campaign->seconds_between_calls);
 
-            return max(1, now()->diffInSeconds($nextPacingSlot, false));
+            return max(1, (int) now()->diffInSeconds($nextPacingSlot, false));
         }
 
         if ($activeAttempts > 0) {
@@ -645,7 +645,7 @@ class BasicDialerService
             ->min('next_attempt_at');
 
         if ($nextRecipientAt) {
-            return max(1, now()->diffInSeconds(Carbon::parse($nextRecipientAt), false));
+            return max(1, (int) now()->diffInSeconds(Carbon::parse($nextRecipientAt), false));
         }
 
         return max(1, (int) $campaign->seconds_between_calls);

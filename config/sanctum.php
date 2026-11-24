@@ -58,6 +58,9 @@ return [
     */
 
     'middleware' => [
+        'authenticate_session' => Laravel\Sanctum\Http\Middleware\AuthenticateSession::class,
+        'validate_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
+        // Sanctum 3 reads both keys between git pull and app:update.
         'verify_csrf_token' => App\Http\Middleware\VerifyCsrfToken::class,
         'encrypt_cookies' => App\Http\Middleware\EncryptCookies::class,
     ],

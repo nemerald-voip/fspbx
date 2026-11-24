@@ -76,6 +76,7 @@ class UpdateAppSupervisorRestartTest extends TestCase
                 return 0;
             }
         };
+        $command->setLaravel($this->app);
         $command->setOutput(new OutputStyle(new ArrayInput([]), $this->output));
 
         return $command;
@@ -176,9 +177,11 @@ class UpdateAppSupervisorRestartTest extends TestCase
         $modules = $this->createMock(ProFeaturesService::class);
         $modules->method('getSupervisorProgramsToRestart')->willReturn(['fspbx-contact-center-events']);
         $this->app->instance(ProFeaturesService::class, $modules);
-        Process::fake(fn ($process) => $process->command === ['supervisorctl', 'status']
-            ? Process::result(output: "fspbx-contact-center-events RUNNING pid 123\n")
-            : Process::result(exitCode: 7, output: 'ERROR (spawn error)'));
+        Process::fake(fn ($process) => match ($process->command) {
+            'composer check-platform-reqs --lock --no-interaction --format=json' => Process::result(),
+            ['supervisorctl', 'status'] => Process::result(output: "fspbx-contact-center-events RUNNING pid 123\n"),
+            default => Process::result(exitCode: 7, output: 'ERROR (spawn error)'),
+        });
 
         $this->command()->handle();
 

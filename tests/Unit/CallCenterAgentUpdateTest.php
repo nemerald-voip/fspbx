@@ -32,7 +32,7 @@ class CallCenterAgentUpdateTest extends TestCase
 
     public function createApplication()
     {
-        if ($this->getName(false) !== 'test_extension_updates_work_without_optional_modules') {
+        if ($this->name() !== 'test_extension_updates_work_without_optional_modules') {
             return parent::createApplication();
         }
         // Hide optional modules only in this separate test process.
