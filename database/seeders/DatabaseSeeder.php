@@ -1843,6 +1843,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'backup_keep_count',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '5',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of dated full backup archives to keep locally. Enter a whole number of 1 or more.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 'check_fax_service_status',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "false",

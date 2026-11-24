@@ -23,9 +23,11 @@ class BackupApp extends Command
         $lock = null;
         $work = null;
         try {
-            $root = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
-                ->where('default_setting_subcategory', 'backup_path')
-                ->where('default_setting_enabled', true)->value('default_setting_value') ?: '/var/backups/fspbx';
+            $settings = DefaultSettings::where('default_setting_category', 'scheduled_jobs')
+                ->whereIn('default_setting_subcategory', ['backup_path', 'backup_keep_count'])
+                ->where('default_setting_enabled', true)
+                ->pluck('default_setting_value', 'default_setting_subcategory');
+            $root = $settings->get('backup_path') ?: '/var/backups/fspbx';
             if (!str_starts_with($root, '/') || rtrim($root, '/') === '') {
                 throw new RuntimeException('Choose an absolute backup directory other than /.');
             }
@@ -107,16 +109,7 @@ class BackupApp extends Command
 
             $this->info("Packaging $archive ...");
             $this->package($work, $app, '/', [ltrim($dump, '/'), ...array_map(fn ($path) => ltrim($path, '/'), $paths)]);
-            if (!rename("$work/archive.partial", $archive)) {
-                throw new RuntimeException('Could not publish the completed archive.');
-            }
-
-            foreach (glob("$root/backup_????-??-??.tgz") ?: [] as $older) {
-                if ($older !== $archive && filemtime($older) < time() - 3 * 86400 && !unlink($older)) {
-                    throw new RuntimeException("Could not remove old archive $older.");
-                }
-            }
-            $this->removeStandaloneDumps("$root/postgresql");
+            $this->publishArchive("$work/archive.partial", $archive, $dump, $settings->get('backup_keep_count'));
             $this->info("Backup complete: $archive");
             return self::SUCCESS;
         } catch (\Throwable $exception) {
@@ -140,15 +133,54 @@ class BackupApp extends Command
         }
     }
 
-    private function removeStandaloneDumps(string $directory): void
+    private function publishArchive(string $partial, string $archive, string $dump, ?string $keepCount): void
     {
+        $newDate = !is_file($archive);
+        if (!rename($partial, $archive)) {
+            throw new RuntimeException('Could not publish the completed archive.');
+        }
+        if (!unlink($dump)) {
+            throw new RuntimeException("Could not remove the archived database dump $dump.");
+        }
+
+        $limit = filter_var($keepCount ?? '5', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if ($limit === false) {
+            throw new RuntimeException("Backup saved to $archive. Rotation skipped: backup_keep_count must be a positive integer.");
+        }
+        $otherArchives = [];
+        foreach (new FilesystemIterator(dirname($archive)) as $file) {
+            if ($file->getPathname() !== $archive && $file->isFile()
+                && preg_match('/^backup_\d{4}-\d{2}-\d{2}\.tgz\z/', $file->getFilename())) {
+                $otherArchives[] = $file->getPathname();
+            }
+        }
+        sort($otherArchives, SORT_STRING);
+        $excess = max(0, count($otherArchives) + 1 - $limit);
+        foreach (array_slice($otherArchives, 0, $excess) as $expired) {
+            if (!unlink($expired)) {
+                throw new RuntimeException("Could not remove old archive $expired.");
+            }
+        }
+        if ($newDate) {
+            $this->removeOldestStandaloneDump(dirname($dump));
+        }
+    }
+
+    private function removeOldestStandaloneDump(string $directory): void
+    {
+        $oldestDate = null;
+        $oldestPath = null;
         foreach (new FilesystemIterator($directory) as $file) {
-            if (!$file->isFile() || !preg_match('/^(?:fspbx|fusionpbx)_pgsql_\d{4}-\d{2}-\d{2}\.sql\z/', $file->getFilename())) {
+            if (!$file->isFile() || !preg_match('/^(?:fspbx|fusionpbx)_pgsql_(\d{4}-\d{2}-\d{2})\.sql\z/', $file->getFilename(), $match)) {
                 continue;
             }
-            if (!unlink($file->getPathname())) {
-                throw new RuntimeException("Could not remove standalone dump {$file->getPathname()}.");
+            if ($oldestDate === null || $match[1] < $oldestDate) {
+                $oldestDate = $match[1];
+                $oldestPath = $file->getPathname();
             }
+        }
+        if ($oldestPath !== null && !unlink($oldestPath)) {
+            throw new RuntimeException("Could not remove standalone dump $oldestPath.");
         }
     }
 

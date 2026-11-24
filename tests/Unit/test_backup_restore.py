@@ -70,23 +70,83 @@ $packer->invoke(new App\Console\Commands\BackupApp, $argv[1], $argv[2], $argv[3]
         with tarfile.open(self.archive) as archive:
             self.assertNotIn(restore.APP_MEMBER + "/vendor/dependency", archive.getnames())
 
-    def test_cleanup_removes_current_and_legacy_dated_dumps(self):
-        directory = self.root / "backups [local]" / "postgresql"
-        dumps = ("fspbx_pgsql_2026-01-02.sql", "fusionpbx_pgsql_2025-12-31.sql",
-                 "fusionpbx_pgsql_2026-01-01.sql")
-        keep = ("unrelated.sql", "fusionpbx_pgsql_2026-01-01.sql.bak", "fusionpbx_pgsql_copy-01-01.sql")
-        for name in (*dumps, *keep):
-            put(directory, name, b"fixture")
-        put(directory / "archive", dumps[0], b"fixture")
-
-        subprocess.run(["php", "-r", r"""
+    def publish(self, root, date, keep_count=None, write_archive=True):
+        dump = root / "postgresql" / f"fspbx_pgsql_{date}.sql"
+        archive = root / f"backup_{date}.tgz"
+        put(dump.parent, dump.name, b"database")
+        partial = root / "archive.partial"
+        if write_archive:
+            with tarfile.open(partial, "w:gz") as contents:
+                contents.add(dump, arcname=dump.name)
+        args = ["php", "-r", r"""
 require 'vendor/autoload.php';
-$cleanup = new ReflectionMethod(App\Console\Commands\BackupApp::class, 'removeStandaloneDumps');
-$cleanup->invoke(new App\Console\Commands\BackupApp, $argv[1]);
-""", str(directory)], check=True, cwd=REPO)
+$publish = new ReflectionMethod(App\Console\Commands\BackupApp::class, 'publishArchive');
+try {
+    $publish->invoke(new App\Console\Commands\BackupApp, $argv[1], $argv[2], $argv[3], $argv[4] ?? null);
+} catch (Throwable $error) {
+    fwrite(STDERR, $error->getMessage());
+    exit(1);
+}
+""", str(partial), str(archive), str(dump)]
+        if keep_count is not None:
+            args.append(str(keep_count))
+        return subprocess.run(args, cwd=REPO, capture_output=True, text=True)
 
-        self.assertEqual({p.name for p in directory.iterdir() if p.is_file()}, set(keep))
-        self.assertTrue((directory / "archive" / dumps[0]).is_file())
+    def test_retention_counts_full_archives_and_removes_the_packaged_dump(self):
+        for setting, expected_count in ((None, 5), (2, 2), (1, 1)):
+            with self.subTest(setting=setting):
+                root = self.root / f"backups [{setting}]"
+                dates = [f"2026-01-{day:02}" for day in range(1, 8)]
+                put(root, "backup_copy-01-01.tgz", b"unrelated")
+                for index, date in enumerate(dates):
+                    result = self.publish(root, date, setting)
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    archive = root / f"backup_{date}.tgz"
+                    os.utime(archive, (100 - index, 100 - index))
+                    keep = dates[max(0, index + 1 - expected_count):index + 1]
+                    self.assertEqual({p.name for p in root.glob("*.tgz")},
+                                     {"backup_copy-01-01.tgz"} | {f"backup_{d}.tgz" for d in keep})
+                    self.assertEqual(list((root / "postgresql").iterdir()), [])
+                    with tarfile.open(archive) as contents:
+                        self.assertEqual(contents.extractfile(f"fspbx_pgsql_{date}.sql").read(), b"database")
+
+    def test_one_leftover_dump_rotates_per_new_archive_date(self):
+        root = self.root / "backups"
+        directory = root / "postgresql"
+        oldest = "fusionpbx_pgsql_2025-12-30.sql"
+        middle = "fspbx_pgsql_2025-12-31.sql"
+        newest = "fusionpbx_pgsql_2026-01-01.sql"
+        unrelated = {"unrelated.sql", "fusionpbx_pgsql_2026-01-01.sql.bak", "fusionpbx_pgsql_copy-01-01.sql"}
+        for name in (newest, middle, oldest, *unrelated):
+            put(directory, name, b"fixture")
+        os.utime(directory / newest, (1, 1))
+        put(directory / "archive", oldest, b"fixture")
+        for day, remaining in ((2, {middle, newest}), (2, {middle, newest}), (3, {newest}), (4, set())):
+            result = self.publish(root, f"2026-01-0{day}")
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual({p.name for p in directory.iterdir() if p.is_file()}, unrelated | remaining)
+        self.assertTrue((directory / "archive" / oldest).is_file())
+
+    def test_failed_publication_preserves_dumps_and_previous_archive(self):
+        root = self.root / "backups"
+        put(root, "backup_2026-01-01.tgz", b"previous archive")
+        put(root, "postgresql/fusionpbx_pgsql_2025-12-31.sql", b"old dump")
+        result = self.publish(root, "2026-01-02", 1, write_archive=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual((root / "backup_2026-01-01.tgz").read_bytes(), b"previous archive")
+        self.assertEqual((root / "postgresql/fusionpbx_pgsql_2025-12-31.sql").read_bytes(), b"old dump")
+        self.assertEqual((root / "postgresql/fspbx_pgsql_2026-01-02.sql").read_bytes(), b"database")
+
+    def test_invalid_limit_saves_the_new_archive_and_skips_rotation(self):
+        root = self.root / "backups"
+        put(root, "backup_2026-01-01.tgz", b"previous archive")
+        put(root, "postgresql/fusionpbx_pgsql_2025-12-31.sql", b"old dump")
+        result = self.publish(root, "2026-01-02", 0)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("backup_keep_count must be a positive integer", result.stderr)
+        self.assertTrue((root / "backup_2026-01-02.tgz").is_file())
+        self.assertTrue((root / "backup_2026-01-01.tgz").is_file())
+        self.assertTrue((root / "postgresql/fusionpbx_pgsql_2025-12-31.sql").is_file())
 
     def test_full_archive_without_manifest(self):
         with tarfile.open(self.archive, "w:gz") as archive:

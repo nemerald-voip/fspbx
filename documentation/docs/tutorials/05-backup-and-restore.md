@@ -19,7 +19,9 @@ Use a full FS PBX archive to recover a failed server or move a working PBX to a 
    php artisan app:backup
    ```
 
-3. Keep multiple dated copies **off the PBX**. The local command writes `backup_YYYY-MM-DD.tgz`, replaces that day's file on another successful run, and prunes older local archives. Arrange an automated copy after successful completion and alert on missing, stale or failed copies. Protect the storage and transfer with encryption and restrict who can read or delete backups. The archive contains database credentials, private keys, messages and call audio.
+3. Set **backup_keep_count** in **scheduled_jobs** to the number of dated full archives to keep locally. The default is **5**, including when the setting is missing. Each run creates the PostgreSQL dump first, includes it in `backup_YYYY-MM-DD.tgz`, then removes the separate dump after the archive is saved. Another successful run on the same date replaces that day's archive. Each new dated archive also retires the oldest leftover standalone dump, if one exists.
+
+   Keep multiple dated copies **off the PBX**. Arrange an automated copy after successful completion and alert on missing, stale or failed copies. Protect the storage and transfer with encryption and restrict who can read or delete backups. The archive contains database credentials, private keys, messages and call audio.
 4. Keep the installed FS PBX release, matching installer or clean install image, optional module versions and licenses, database extensions, storage mounts, DNS and carrier access in your recovery inventory. Keep the restore script with the recovery materials. Rehearse on an isolated replacement and record how long the copy, import and call tests take.
 
 ### What to keep
