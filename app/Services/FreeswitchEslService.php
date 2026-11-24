@@ -6,6 +6,7 @@ use Throwable;
 use ESLconnection;
 use App\Models\SipProfiles;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 
 class FreeswitchEslService
 {
@@ -297,7 +298,7 @@ class FreeswitchEslService
         return collect($channels);
     }
 
-    function killChannel($uuid)
+    function killChannel($uuid, bool $disconnect = true)
     {
         // Check if the 'esl' extension is loaded
         if (!extension_loaded('esl')) {
@@ -305,9 +306,25 @@ class FreeswitchEslService
         }
 
         $cmd = "uuid_kill " . $uuid;
-        $result = $this->executeCommand($cmd);
+        $result = $this->executeCommand($cmd, $disconnect);
 
         return $result;
+    }
+
+    /** Called only after uuid_kill could not locate this specific listed channel. */
+    public function clearStaleChannelEntry(array $channel): bool
+    {
+        $uuid = $channel['uuid'];
+        $epoch = (string) ($channel['created_epoch'] ?? '');
+        if (! Str::isUuid($uuid) || ! ctype_digit($epoch)) {
+            return false;
+        }
+
+        // Preserve the authorized context as a single ESL argument, including an empty context.
+        $context = 'x' . bin2hex($channel['context']);
+        $reply = $this->executeCommand("lua clear_stale_channel.lua $uuid $epoch $context", false);
+
+        return $reply === '+OK absent';
     }
 
 

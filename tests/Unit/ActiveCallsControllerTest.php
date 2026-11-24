@@ -142,6 +142,61 @@ class ActiveCallsControllerTest extends TestCase
         $this->assertSame(403, $controller->selectAll(Request::create('/api/active-calls/select-all'), $esl)->getStatusCode());
     }
 
+    public function test_bulk_hangup_reports_each_failure_and_only_targets_visible_calls(): void
+    {
+        $this->permissions('call_active_view', 'call_active_hangup');
+        $live = '11111111-1111-4111-8111-111111111111';
+        $stale = '22222222-2222-4222-8222-222222222222';
+        $other = '33333333-3333-4333-8333-333333333333';
+        $this->app->instance('request', Request::create('/api/active-calls/action', 'POST', [
+            'action' => 'end_call', 'ids' => [$stale, $live, $other],
+        ]));
+        $esl = Mockery::mock(FreeswitchEslService::class);
+        $esl->shouldReceive('getAllChannels')->once()->with(false)->andReturn(collect([
+            $this->channel($live, 'alpha.test', 'Alice'),
+            $this->channel($stale, 'alpha.test', 'Bob'),
+            $this->channel($other, 'beta.test', 'Carol'),
+        ]));
+        $esl->shouldReceive('killChannel')->once()->with($stale, false)->andReturn('-ERR No such channel!');
+        $esl->shouldReceive('clearStaleChannelEntry')->once()
+            ->with($this->channel($stale, 'alpha.test', 'Bob'))->andReturn(true);
+        $esl->shouldReceive('killChannel')->once()->with($live, false)->andReturn('+OK');
+        $esl->shouldReceive('disconnect')->once();
+
+        $response = (new ActiveCallsController())->handleAction($esl);
+        $this->assertSame(409, $response->getStatusCode());
+        $body = $response->getData(true);
+        $this->assertSame([$live], $body['accepted']);
+        $this->assertSame([$stale], $body['cleared']);
+        $this->assertArrayNotHasKey($stale, $body['errors']);
+        $this->assertArrayHasKey($other, $body['errors']);
+    }
+
+    public function test_only_an_explicit_missing_channel_reply_can_trigger_cleanup_and_cleanup_must_be_confirmed(): void
+    {
+        $this->permissions('call_active_view', 'call_active_hangup');
+        $id = '11111111-1111-4111-8111-111111111111';
+        $row = $this->channel($id, 'alpha.test', 'Alice');
+        foreach (['-ERR No such channel!', '-ERR command failed', null] as $reply) {
+            $this->app->instance('request', Request::create('/api/active-calls/action', 'POST', [
+                'action' => 'end_call', 'ids' => [$id],
+            ]));
+            $esl = Mockery::mock(FreeswitchEslService::class);
+            $esl->shouldReceive('getAllChannels')->once()->with(false)->andReturn(collect([$row]));
+            $esl->shouldReceive('killChannel')->once()->with($id, false)->andReturn($reply);
+            if ($reply === '-ERR No such channel!') {
+                $esl->shouldReceive('clearStaleChannelEntry')->once()->with($row)->andReturn(false);
+            } else {
+                $esl->shouldNotReceive('clearStaleChannelEntry');
+            }
+            $esl->shouldReceive('disconnect')->once();
+            $response = (new ActiveCallsController())->handleAction($esl);
+            $this->assertSame(409, $response->getStatusCode());
+            $this->assertSame([], $response->getData(true)['cleared']);
+            $this->assertArrayHasKey($id, $response->getData(true)['errors']);
+        }
+    }
+
     private function permissions(string ...$names): void
     {
         session(['permissions' => array_map(fn ($name) => (object) ['permission_name' => $name], $names)]);

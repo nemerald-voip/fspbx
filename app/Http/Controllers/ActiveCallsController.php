@@ -189,29 +189,73 @@ class ActiveCallsController extends Controller
 
     public function handleAction(FreeswitchEslService $eslService)
     {
-        if (! userCheckPermission('call_active_hangup')) {
+        if (! userCheckPermission('call_active_view') || ! userCheckPermission('call_active_hangup')) {
             return response()->json([
                 'errors' => ['permission' => [__('You do not have permission to end active calls.')]],
             ], 403);
         }
 
+        $input = request()->validate([
+            'action' => ['required', 'in:end_call'],
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'uuid', 'distinct'],
+        ]);
+
         try {
-            foreach (request('ids') as $uuid) {
-                if (request('action') == 'end_call') {
-                    $result = $eslService->killChannel($uuid);
+            $domain = session('domain_name');
+            $allAccounts = userCheckPermission('call_active_all');
+            $visible = $eslService->getAllChannels(false)
+                ->filter(fn ($row) => $allAccounts || ($domain && ($row['context'] ?? null) === $domain))
+                ->keyBy('uuid');
+
+            $accepted = [];
+            $cleared = [];
+            $errors = [];
+            foreach ($input['ids'] as $uuid) {
+                if (! $visible->has($uuid)) {
+                    $errors[$uuid] = [$uuid . ': ' . __('The selected item is no longer available.')];
+                    continue;
                 }
+
+                $reply = $eslService->killChannel($uuid, false);
+                if ($reply === '+OK') {
+                    $accepted[] = $uuid;
+                    continue;
+                }
+
+                if ($reply === '-ERR No such channel!') {
+                    if ($eslService->clearStaleChannelEntry($visible->get($uuid))) {
+                        $cleared[] = $uuid;
+                    } else {
+                        $errors[$uuid] = [$uuid . ': ' . __('FreeSWITCH could not confirm removal of the stale entry.')];
+                    }
+                    continue;
+                }
+
+                $message = is_string($reply) && str_starts_with($reply, '-ERR')
+                    ? $reply : __('No response from FreeSWITCH.');
+                $errors[$uuid] = [$uuid . ': ' . $message];
             }
 
-            // Return a JSON response indicating success
+            if ($errors) {
+                return response()->json(['accepted' => $accepted, 'cleared' => $cleared, 'errors' => $errors], 409);
+            }
+
             return response()->json([
-                'messages' => ['success' => [__('Request successfully processed.')]]
+                'accepted' => $accepted,
+                'cleared' => $cleared,
+                'messages' => ['success' => [$cleared
+                    ? __('Request processed. Stale entries cleared: :count.', ['count' => count($cleared)])
+                    : __('Request successfully processed.')]],
             ], 201);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
-            ], 500); // 500 Internal Server Error for any other errors
+            ], 500);
+        } finally {
+            $eslService->disconnect();
         }
     }
 
