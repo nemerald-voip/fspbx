@@ -107,6 +107,11 @@ class Kernel extends ConsoleKernel
         // independently with atomic state transitions deduplicating overlap.
         $schedule->job(new \App\Jobs\CheckStuckFaxesJob())->everyFiveMinutes();
 
+        // Fax channels are local to each FreeSWITCH. Run on each node; do not
+        // put this through the HA coordinator. Mail only when
+        // FAX_LONG_CHANNEL_ALERT_TO is set.
+        $schedule->job(new \App\Jobs\CheckLongFaxChannelsJob())->everyFiveMinutes();
+
         // Find stale Ringotel users
         if (isset($jobSettings['audit_stale_ringotel_users']) && $jobSettings['audit_stale_ringotel_users'] === "true") {
             $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())

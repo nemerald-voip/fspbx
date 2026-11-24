@@ -13,4 +13,17 @@ return [
     */
 
     'webhook_debug' => env('FAX_WEBHOOK_DEBUG', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Long txfax channel alert
+    |--------------------------------------------------------------------------
+    |
+    | CheckLongFaxChannelsJob mails this address when a txfax channel is still
+    | up after its page budget. There is no default. A blank value skips the
+    | mail and still hangs the channel up.
+    |
+    */
+
+    'long_channel_alert_to' => env('FAX_LONG_CHANNEL_ALERT_TO', ''),
 ];

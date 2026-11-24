@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\DefaultSettings;
 use App\Models\FaxLogs;
 use App\Models\OutboundFax;
+use App\Services\Fax\FaxChannelGuard;
 use App\Services\FreeswitchEslService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -313,6 +314,10 @@ class SendFaxJob implements ShouldQueue
         ]);
 
         $e = fn($val) => str_replace(["'", '{', '}'], ["\\'", '', ''], (string) $val);
+        $pageCount = ($fax->total_pages === null || $fax->total_pages === '') ? null : (int) $fax->total_pages;
+        $budgetSeconds = FaxChannelGuard::budgetSeconds($pageCount);
+        $resultHangup = FaxChannelGuard::resultHangupApplication();
+        $guardedExtension = $e(FaxChannelGuard::inlineExtension((string) $fax->file_path, $budgetSeconds));
         $callerIdName = trim((string) $fax->source_name) !== ''
             ? $fax->source_name
             : 'Fax Server';
@@ -324,7 +329,10 @@ class SendFaxJob implements ShouldQueue
             "outbound_fax_attempt_uuid={$e($attemptUuid)}",
             "accountcode={$e($fax->accountcode)}",
             "sip_h_X-customacc='{$e($fax->accountcode)}'",
-            "execute_on_answer='sched_hangup +14400'",
+            "loopback_bowout_on_execute=true",
+            "fax_channel_budget={$budgetSeconds}",
+            "execute_on_fax_success='".$resultHangup."'",
+            "execute_on_fax_failure='".$resultHangup."'",
             "call_direction='outbound'",
             "domain_uuid={$e($fax->domain_uuid)}",
             "domain_name={$e($domainName)}",
@@ -385,7 +393,7 @@ class SendFaxJob implements ShouldQueue
 
         $dialplanContext = $domainName !== '' ? ' inline ' . $e($domainName) : '';
 
-        return '{' . $this->buildOriginateVariableBlock($vars) . '}' . $originateEndpoint . " 'txfax:{$e($fax->file_path)}'" . $dialplanContext;
+        return '{' . $this->buildOriginateVariableBlock($vars) . '}' . $originateEndpoint . " '{$guardedExtension}'" . $dialplanContext;
     }
 
     private function localFaxEndpoint(OutboundFax $fax, string $domainName): ?string

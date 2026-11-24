@@ -164,7 +164,18 @@ class FaxForwardTest extends TestCase
         $outbound->retry_count = 1;
         $command = $method->invoke($job, $outbound, (string) Str::uuid(), (string) Str::uuid());
         $this->assertStringContainsString('}user/201@account.test ', $command);
-        $this->assertStringContainsString("'txfax:{$outbound->file_path}'", $command);
+        $budget = \App\Services\Fax\FaxChannelGuard::budgetSeconds(
+            $outbound->total_pages === null || $outbound->total_pages === '' ? null : (int) $outbound->total_pages
+        );
+        $this->assertStringContainsString(
+            "'sched_hangup:+{$budget},txfax:{$outbound->file_path},hangup:NORMAL_CLEARING'",
+            $command
+        );
+        $this->assertStringContainsString("execute_on_fax_success='sched_hangup +2'", $command);
+        $this->assertStringContainsString("execute_on_fax_failure='sched_hangup +2'", $command);
+        $this->assertStringContainsString('loopback_bowout_on_execute=true', $command);
+        $this->assertStringContainsString("fax_channel_budget={$budget}", $command);
+        $this->assertStringNotContainsString('sched_hangup +14400', $command);
         $this->assertStringContainsString("absolute_codec_string='PCMU,PCMA'", $command);
         $this->assertStringContainsString("fax_ident='+12025550100'", $command);
         $this->assertStringContainsString('fax_enable_t38_request=false', $command);
