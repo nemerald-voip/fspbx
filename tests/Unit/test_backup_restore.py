@@ -14,7 +14,7 @@ REPO = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("restore", REPO / "install/restore-fspbx.py")
 restore = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(restore)
-DUMP = "var/custom backup/postgresql/fusionpbx_pgsql_2026-01-02.sql"
+DUMP = "var/custom backup/postgresql/fspbx_pgsql_2026-01-02.sql"
 KEY = "base64:" + "YWFh" * 10 + "YWE="
 
 
@@ -71,10 +71,19 @@ $packer->invoke(new App\Console\Commands\BackupApp, $argv[1], $argv[2], $argv[3]
             self.assertNotIn(restore.APP_MEMBER + "/vendor/dependency", archive.getnames())
 
     def test_legacy_full_archive(self):
-        with tarfile.open(self.archive, "w:gz") as archive:
-            for name in (DUMP, self.media, self.recordings, restore.APP_MEMBER):
-                archive.add(self.site / name, arcname=name)
-        self.assertEqual(restore.stage_archive(self.archive, self.stage)[0], {})
+        old_dump = "var/custom backup/postgresql/fusionpbx_pgsql_2026-01-02.sql"
+        for manifest in ({}, {**self.manifest, "dump": old_dump}):
+            with self.subTest(has_manifest=bool(manifest)):
+                with tarfile.open(self.archive, "w:gz") as archive:
+                    if manifest:
+                        put(self.root, "fspbx-migration.json", json.dumps(manifest).encode())
+                        archive.add(self.root / "fspbx-migration.json", arcname="fspbx-migration.json")
+                    archive.add(self.site / DUMP, arcname=old_dump)
+                    for name in (self.media, self.recordings, restore.APP_MEMBER):
+                        archive.add(self.site / name, arcname=name)
+                with tempfile.TemporaryDirectory(dir=self.stage) as stage:
+                    self.assertEqual(restore.stage_archive(self.archive, Path(stage))[0], manifest)
+                    self.assertEqual((Path(stage) / "database.dump").read_bytes(), b"fixture dump")
 
     def test_damaged_gzip_trailer_is_rejected(self):
         self.package()

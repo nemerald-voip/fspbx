@@ -37,7 +37,7 @@ Use a full FS PBX archive to recover a failed server or move a working PBX to a 
 
 A previous full `.tgz` can be checked if it contains the application under `var/www/fspbx`, its `.env`, release information, the database dump and media directories. Older full backups generally contain only the configured database schema and omit the web certificate and renewal configuration. Supply missing dependencies separately or issue a new web certificate. If the source is still running, take a current full backup.
 
-A standalone `fusionpbx_pgsql_YYYY-MM-DD.sql` from the legacy backup job can recover database records. Audio, uploads and the original encryption key must come from another copy or storage snapshot. If only the dump survived, preserve it and recover what you can into a separate empty database. A file with a `.sql` suffix may be a PostgreSQL custom dump. Use `pg_restore --list FILE` to identify that format. A lost `APP_KEY` requires re-entering the affected encrypted credentials. [PostgreSQL restore reference](https://www.postgresql.org/docs/current/app-pgrestore.html)
+A standalone database dump can recover database records. New dumps use `fspbx_pgsql_YYYY-MM-DD.sql`. The restore tool also recognizes `fusionpbx_pgsql_YYYY-MM-DD.sql` in older archives. Audio, uploads and the original encryption key must come from another copy or storage snapshot. If only the dump survived, preserve it and recover what you can into a separate empty database. A file with a `.sql` suffix may be a PostgreSQL custom dump. Use `pg_restore --list FILE` to identify that format. A lost `APP_KEY` requires re-entering the affected encrypted credentials. [PostgreSQL restore reference](https://www.postgresql.org/docs/current/app-pgrestore.html)
 
 ## Choose the recovery point
 
