@@ -70,6 +70,24 @@ $packer->invoke(new App\Console\Commands\BackupApp, $argv[1], $argv[2], $argv[3]
         with tarfile.open(self.archive) as archive:
             self.assertNotIn(restore.APP_MEMBER + "/vendor/dependency", archive.getnames())
 
+    def test_cleanup_removes_current_and_legacy_dated_dumps(self):
+        directory = self.root / "backups [local]" / "postgresql"
+        dumps = ("fspbx_pgsql_2026-01-02.sql", "fusionpbx_pgsql_2025-12-31.sql",
+                 "fusionpbx_pgsql_2026-01-01.sql")
+        keep = ("unrelated.sql", "fusionpbx_pgsql_2026-01-01.sql.bak", "fusionpbx_pgsql_copy-01-01.sql")
+        for name in (*dumps, *keep):
+            put(directory, name, b"fixture")
+        put(directory / "archive", dumps[0], b"fixture")
+
+        subprocess.run(["php", "-r", r"""
+require 'vendor/autoload.php';
+$cleanup = new ReflectionMethod(App\Console\Commands\BackupApp::class, 'removeStandaloneDumps');
+$cleanup->invoke(new App\Console\Commands\BackupApp, $argv[1]);
+""", str(directory)], check=True, cwd=REPO)
+
+        self.assertEqual({p.name for p in directory.iterdir() if p.is_file()}, set(keep))
+        self.assertTrue((directory / "archive" / dumps[0]).is_file())
+
     def test_full_archive_without_manifest(self):
         with tarfile.open(self.archive, "w:gz") as archive:
             for name in (DUMP, self.media, self.recordings, restore.APP_MEMBER):

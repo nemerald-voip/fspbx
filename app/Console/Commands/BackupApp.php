@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\DefaultSettings;
 use Dotenv\Dotenv;
+use FilesystemIterator;
 use Illuminate\Console\Command;
 use Illuminate\Encryption\Encrypter;
 use Illuminate\Support\Facades\DB;
@@ -115,11 +116,7 @@ class BackupApp extends Command
                     throw new RuntimeException("Could not remove old archive $older.");
                 }
             }
-            foreach (glob("$root/postgresql/fspbx_pgsql_????-??-??.sql") ?: [] as $standalone) {
-                if (!unlink($standalone)) {
-                    throw new RuntimeException("Could not remove standalone dump $standalone.");
-                }
-            }
+            $this->removeStandaloneDumps("$root/postgresql");
             $this->info("Backup complete: $archive");
             return self::SUCCESS;
         } catch (\Throwable $exception) {
@@ -140,6 +137,18 @@ class BackupApp extends Command
                 fclose($lock);
             }
             umask($previousMask);
+        }
+    }
+
+    private function removeStandaloneDumps(string $directory): void
+    {
+        foreach (new FilesystemIterator($directory) as $file) {
+            if (!$file->isFile() || !preg_match('/^(?:fspbx|fusionpbx)_pgsql_\d{4}-\d{2}-\d{2}\.sql\z/', $file->getFilename())) {
+                continue;
+            }
+            if (!unlink($file->getPathname())) {
+                throw new RuntimeException("Could not remove standalone dump {$file->getPathname()}.");
+            }
         }
     }
 
