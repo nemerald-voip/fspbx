@@ -115,7 +115,7 @@ class BackupApp extends Command
                     throw new RuntimeException("Could not remove old archive $older.");
                 }
             }
-            foreach (glob("$root/postgresql/{fspbx,fusionpbx}_pgsql_????-??-??.sql", GLOB_BRACE) ?: [] as $standalone) {
+            foreach (glob("$root/postgresql/fspbx_pgsql_????-??-??.sql") ?: [] as $standalone) {
                 if (!unlink($standalone)) {
                     throw new RuntimeException("Could not remove standalone dump $standalone.");
                 }

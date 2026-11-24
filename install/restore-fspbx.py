@@ -88,7 +88,7 @@ def stage_archive(filename, stage):
                 with dest.open("xb") as out:
                     out.write(read_small(archive, entry))
                 continue
-            if re.fullmatch(r"(?:.*/)?postgresql/(?:fspbx|fusionpbx)_pgsql_\d{4}-\d\d-\d\d\.sql", name):
+            if re.fullmatch(r"(?:.*/)?postgresql/fspbx_pgsql_\d{4}-\d\d-\d\d\.sql", name):
                 if dump or not entry.isfile():
                     raise ValueError("Expected exactly one regular PostgreSQL dump.")
                 dump = name

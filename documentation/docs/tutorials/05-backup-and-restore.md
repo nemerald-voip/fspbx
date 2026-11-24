@@ -33,11 +33,9 @@ Use a full FS PBX archive to recover a failed server or move a working PBX to a 
 | Web TLS, firewall and host settings | The restore installs a current, matching web certificate and key saved as regular files in the standard Nginx SSL locations. Current full backups also include the standard Nginx site, Dehydrated/Certbot files, FusionPBX configuration and persistent iptables rules when present. Reapply site-specific settings on the replacement. Protect any certificates, key files or hooks stored elsewhere separately. |
 | External data | Protect remote object storage, mounted media, custom upload or sound paths, symlink targets, externally supplied secrets and site-specific services separately. Verify a mounted filesystem is mounted at backup time. Record how to reconnect it on the replacement. |
 
-### If you have an older backup
+### If you only have a database dump
 
-A previous full `.tgz` can be checked if it contains the application under `var/www/fspbx`, its `.env`, release information, the database dump and media directories. Older full backups generally contain only the configured database schema and omit the web certificate and renewal configuration. Supply missing dependencies separately or issue a new web certificate. If the source is still running, take a current full backup.
-
-A standalone database dump can recover database records. New dumps use `fspbx_pgsql_YYYY-MM-DD.sql`. The restore tool also recognizes `fusionpbx_pgsql_YYYY-MM-DD.sql` in older archives. Audio, uploads and the original encryption key must come from another copy or storage snapshot. If only the dump survived, preserve it and recover what you can into a separate empty database. A file with a `.sql` suffix may be a PostgreSQL custom dump. Use `pg_restore --list FILE` to identify that format. A lost `APP_KEY` requires re-entering the affected encrypted credentials. [PostgreSQL restore reference](https://www.postgresql.org/docs/current/app-pgrestore.html)
+If the source is still running, take a full backup. If only `fspbx_pgsql_YYYY-MM-DD.sql` survived, keep a copy and restore it into a separate empty database. The file is a PostgreSQL custom dump. Use `pg_restore --list FILE` to inspect its contents. Recover audio, uploads and the original `APP_KEY` from another copy or storage snapshot. If the key is lost, re-enter the affected encrypted credentials. [PostgreSQL restore reference](https://www.postgresql.org/docs/current/app-pgrestore.html)
 
 ## Choose the recovery point
 
