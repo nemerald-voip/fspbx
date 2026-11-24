@@ -374,17 +374,26 @@ class CallRoutingOptionsServiceTest extends TestCase
             'dialplan_destination' => 'true', 'dialplan_xml' => '<action application="transfer"/>', 'dialplan_order' => 1,
         ]);
 
+        $route = new class($domainUuid) {
+            public function __construct(private string $domainUuid) {}
+
+            public function parameter(string $name, mixed $default = null): mixed
+            {
+                return $name === 'domain_uuid' ? $this->domainUuid : $default;
+            }
+        };
+
         foreach ([
             \App\Http\Requests\Api\V1\StorePhoneNumberRequest::class,
             \App\Http\Requests\Api\V1\UpdatePhoneNumberRequest::class,
         ] as $requestClass) {
             $valid = new $requestClass(['routing_options' => [['type' => 'custom_dialplans', 'extension' => '9400']]]);
-            $valid->setRouteResolver(fn () => (object) ['domain_uuid' => $domainUuid]);
+            $valid->setRouteResolver(fn () => $route);
             $rules = array_intersect_key($valid->rules(), array_flip(['routing_options.*.type', 'routing_options.*.extension']));
             $this->assertTrue(\Illuminate\Support\Facades\Validator::make($valid->all(), $rules)->passes());
 
             $invalid = new $requestClass(['routing_options' => [['type' => 'custom_dialplans', 'extension' => '9499']]]);
-            $invalid->setRouteResolver(fn () => (object) ['domain_uuid' => $domainUuid]);
+            $invalid->setRouteResolver(fn () => $route);
             $this->assertFalse(\Illuminate\Support\Facades\Validator::make($invalid->all(), $rules)->passes());
         }
     }
