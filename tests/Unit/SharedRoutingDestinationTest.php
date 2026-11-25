@@ -59,7 +59,8 @@ class SharedRoutingDestinationTest extends TestCase
 
         $campaign = new BasicDialerCampaign;
         $campaign->forceFill(['destination_type' => $type, 'destination_target' => $value]);
-        $this->assertSame($application === 'transfer' ? $data : '&'.$application.'('.$data.')', $this->invoke(BasicDialerService::class, 'answeredApplication', [$campaign, 'example.test']));
+        $expectedDialerAction = $application === 'transfer' ? $data : "'&{$application}({$data})'";
+        $this->assertSame($expectedDialerAction, $this->invoke(BasicDialerService::class, 'answeredApplication', [$campaign, 'example.test']));
 
         if ($type !== 'dynamic_routes') {
             $this->assertSame(['application' => $application, 'data' => $data], $this->invoke(DynamicRouteService::class, 'destinationAction', [$type, $value, 'example.test']));

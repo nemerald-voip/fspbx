@@ -47,12 +47,13 @@
                             </div>
 
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                            <Vueform v-if="!loading" ref="form$" @mounted="form => form.disableValidation()" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     extension_uuid: options.item?.extension_uuid ?? '',
                                     directory_first_name: options.item?.directory_first_name ?? '',
                                     directory_last_name: options.item?.directory_last_name ?? '',
                                     extension: options.item?.extension ?? '',
+                                    user_context: options.item?.user_context,
                                     last_name: options.item?.last_name ?? '',
                                     voicemail_mail_to: options.item?.email ?? '',
                                     description: options.item?.description ?? '',
@@ -73,6 +74,7 @@
                                                     'extension',
                                                     'voicemail_mail_to',
                                                     'description',
+                                                    'user_context',
                                                     
                                                     'container_basic',
                                                     'submit_basic',
@@ -115,6 +117,10 @@
                                                     }" />
                                                 <TextElement name="description" :label="$t('Description')"
                                                     :placeholder="$t('Enter Description')" :floating="false" />
+                                                <ToggleElement name="user_context" :text="$t('Use public inbound routes')"
+                                                    :description="$t('For gateway ports that send calls to a phone number in FS PBX. Leave both names blank to use the caller name from the line.')"
+                                                    true-value="public" :false-value="options.item?.user_context"
+                                                    :conditions="[() => options.permissions?.extension_user_context]" />
 
 
                                                 <GroupElement name="container_basic" />
@@ -166,6 +172,7 @@ const handleTabSelected = (activeTab, previousTab) => {
 }
 
 const submitForm = async (FormData, form$) => {
+    Object.values(form$.elements$).forEach(clearErrorsRecursive)
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData

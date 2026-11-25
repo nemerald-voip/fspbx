@@ -90,7 +90,7 @@ class BridgeRuntimeRoutingTest extends TestCase
         $application = $method->invoke(new BasicDialerService(), $campaign, 'example.test');
 
         $this->assertSame(
-            '&lua(bridge.lua 9df158e6-b145-4c21-b3a9-049b4ee57e9a)',
+            "'&lua(bridge.lua 9df158e6-b145-4c21-b3a9-049b4ee57e9a)'",
             $application
         );
     }

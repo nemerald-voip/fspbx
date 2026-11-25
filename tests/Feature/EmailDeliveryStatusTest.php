@@ -7,6 +7,7 @@ use App\Jobs\SendFaxInTransitNotification;
 use App\Mail\AppCredentials;
 use App\Mail\BaseMailable;
 use App\Mail\FaxInTransit;
+use App\Mail\LoginVerificationCode;
 use App\Models\EmailLog;
 use App\Services\EmailTemplateService;
 use Illuminate\Contracts\Queue\Job;
@@ -95,6 +96,21 @@ class EmailDeliveryStatusTest extends TestCase
         $this->assertStringContainsString('All transports failed.', $failed->sent_debug_info);
         $this->assertStringNotContainsString('Private provider debug', $failed->sent_debug_info);
         $this->assertSame('sent', $earlier->refresh()->status);
+    }
+
+    public function test_email_history_keeps_the_rendered_sign_in_email(): void
+    {
+        $this->mock(EmailTemplateService::class)->shouldReceive('render')->once()->andReturn([
+            'available' => true, 'subject' => 'Sign in with 123456', 'html' => '<p>123456</p>', 'text' => '123456',
+        ]);
+        $sent = Mail::to('recipient@example.test')->send(new LoginVerificationCode(['code' => '123456']));
+        $message = $sent->getOriginalMessage();
+        $this->assertStringContainsString('123456', $message->getTextBody());
+        $log = EmailLog::query()->sole();
+        $this->assertSame('sent', $log->status);
+        $this->assertSame('Sign in with 123456', $log->subject);
+        $this->assertSame($message->getHtmlBody(), $log->html_body);
+        $this->assertSame($message->getTextBody(), $log->text_body);
     }
 
     public function test_successful_retry_reuses_the_log_and_changes_failed_to_sent(): void

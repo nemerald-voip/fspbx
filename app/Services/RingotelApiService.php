@@ -936,7 +936,7 @@ class RingotelApiService
             ->all();
     }
 
-    function createUser($params)
+    function createUser($params): array
     {
         $this->ensureApiTokenExists();
 
@@ -966,16 +966,19 @@ class RingotelApiService
             })
             ->json();
 
-        if (isset($response['error'])) {
-            throw new \Exception($response['error']['message']);
+        $user = $response['result'] ?? null;
+        // Ringotel can return a SIP registration failure inside a successful RPC result.
+        $error = $response['error'] ?? $user['error'] ?? null;
+        if ($error !== null) {
+            $message = is_array($error) ? ($error['message'] ?? null) : $error;
+            throw new \RuntimeException(is_string($message) && trim($message) !== '' ? $message : __('Unable to create user.'));
         }
 
-        if (!isset($response['result'])) {
-            throw new \Exception(__("An unknown error has occurred"));
+        if (!is_array($user) || empty($user['id']) || !isset($user['status'])) {
+            throw new \RuntimeException(__('Unable to create user.'));
         }
-        // return $response['result'];
 
-        return $response['result'];
+        return $user;
     }
 
     // Update mobile app user via Ringotel API call

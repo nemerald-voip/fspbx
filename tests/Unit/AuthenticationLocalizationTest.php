@@ -28,7 +28,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\Compilers\Compiler;
-use Inertia\Inertia;
 use Laravel\Fortify\Actions\AttemptToAuthenticate;
 use Laravel\Fortify\Http\Requests\LoginRequest;
 use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
@@ -176,29 +175,31 @@ class AuthenticationLocalizationTest extends TestCase
     {
         app()->setLocale($locale);
         $catalog = json_decode(file_get_contents(lang_path("$locale.json")), true);
-        session(['code' => '123456', 'code_expiration' => now()->addMinutes(10)]);
-        $controller = new EmailChallengeController;
-        $this->assertValidationMessage(
-            fn () => $controller->store($this->challengeRequest('654321')),
-            'code', $catalog['Supplied authentication code is invalid.']
-        );
-        session(['code_expiration' => now()->subMinute()]);
-        $this->assertValidationMessage(
-            fn () => $controller->store($this->challengeRequest('123456')),
-            'code', $catalog['The code has expired.']
-        );
-
         $user = new User;
         $user->user_email = 'test@example.test';
         $user->domain_uuid = 'test-domain';
         $user->setRelation('user_adv_fields', null);
         $request = Mockery::mock(TwoFactorLoginRequest::class)->makePartial();
-        $request->shouldReceive('hasChallengedUser')->once()->andReturn(true);
-        $request->shouldReceive('challengedUser')->once()->andReturn($user);
-        Inertia::flushShared();
-        $response = $controller->update($request)->toResponse($this->request([], ['X-Inertia' => 'true']));
-        $this->assertSame($catalog['Verification code has been resent'], $response->getData(true)['props']['status']);
-        $this->assertTrue(session('code_expiration')->isFuture());
+        TwoFactorLoginRequest::createFrom($this->request(['code' => '654321']), $request);
+        $request->shouldReceive('hasChallengedUser')->andReturn(true);
+        $request->shouldReceive('challengedUser')->andReturn($user);
+        session(['login.challenge' => 'localization-test', 'login.method' => 'email', 'login.email_sent' => true]);
+        $key = \App\Services\Auth\PendingLogin::emailKey($request);
+        cache()->put($key, hash_hmac('sha256', '123456', config('app.key')), 600);
+        $controller = new EmailChallengeController;
+        $this->assertValidationMessage(
+            fn () => $controller->store($request),
+            'code', $catalog['Supplied authentication code is invalid.']
+        );
+        cache()->forget($key);
+        $this->assertValidationMessage(
+            fn () => $controller->store($request),
+            'code', $catalog['The code has expired.']
+        );
+
+        $controller->update($request);
+        $this->assertSame($catalog['Verification code has been resent'], session('status'));
+        $this->assertTrue(cache()->has($key));
         Bus::assertDispatched(EmailLoginChallengeCode::class);
         Mail::assertNothingSent();
     }
@@ -239,8 +240,10 @@ class AuthenticationLocalizationTest extends TestCase
         $this->assertSame('en-us', $resolve());
         session(['domain.language.code' => 'de']);
         $this->assertSame('de', $resolve());
-        $this->assertSame('Sign in to your account', __('Sign in to your account'));
-        $this->assertSame('These credentials do not match our records.', __('auth.failed'));
+        $catalog = json_decode(file_get_contents(lang_path('de.json')), true);
+        $this->assertSame($catalog['Sign in to your account'] ?: 'Sign in to your account', __('Sign in to your account'));
+        $this->assertSame($catalog['These credentials do not match our records.'] ?: 'These credentials do not match our records.', __('auth.failed'));
+        $this->assertSame('These credentials do not match our records.', __('auth.failed', [], 'unsupported'));
     }
 
     public function test_suspension_message_uses_account_language_before_session_invalidation(): void
@@ -328,11 +331,6 @@ class AuthenticationLocalizationTest extends TestCase
         app()->instance('request', $request);
 
         return $request;
-    }
-
-    private function challengeRequest(string $code): TwoFactorLoginRequest
-    {
-        return TwoFactorLoginRequest::createFrom($this->request(['code' => $code]));
     }
 
     private function assertValidationMessage(callable $action, string $field, string $message, int $status = 422): void

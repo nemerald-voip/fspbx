@@ -25,7 +25,7 @@ class UpdateExtensionRequest extends FormRequest
             // allow updating the extension number, but it must remain unique within domain
             'extension' => ['sometimes', 'numeric', new UniqueExtension($currentUuid, $domainUuid)],
 
-            'directory_first_name' => ['sometimes', 'string', 'max:60'],
+            'directory_first_name' => ['sometimes', 'nullable', 'string', 'max:60'],
             'directory_last_name'  => ['sometimes', 'nullable', 'string', 'max:60'],
 
             'voicemail_mail_to' => ['sometimes', 'nullable', 'email', 'max:255'],
@@ -122,7 +122,7 @@ class UpdateExtensionRequest extends FormRequest
                 'example' => '1001',
             ],
             'directory_first_name' => [
-                'description' => 'First name for directory display. If omitted, value is unchanged.',
+                'description' => 'Omit to keep the current first name. A public-context gateway port can clear both names to preserve the caller name from the line.',
                 'example' => 'Front',
             ],
             'directory_last_name' => [

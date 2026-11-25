@@ -9,6 +9,7 @@ use App\Models\Bridge;
 use App\Models\DefaultSettings;
 use App\Models\Dialplans;
 use App\Models\Domain;
+use App\Models\Extensions;
 use App\Models\Gateways;
 use App\Services\DialplanService;
 use App\Services\FreeswitchEslService;
@@ -148,6 +149,7 @@ class DialplanController extends Controller
 
         return response()->json([
             'gateway_options' => $this->outboundRouteGatewayOptions(),
+            'current_account' => ['uuid' => session('domain_uuid'), 'context' => session('domain_name')],
             'pattern_options' => $this->outboundRoutePatternOptions(),
             'domain_options' => $this->domainOptions(),
             'context_options' => $this->contextOptions(),
@@ -664,6 +666,24 @@ class DialplanController extends Controller
             ])
             ->values()
             ->all();
+
+        if ($currentDomain && userCheckPermission('extension_view')) {
+            $ports = Extensions::without('advSettings')
+                ->where('domain_uuid', $currentDomain)
+                ->where('user_context', 'public')
+                ->where('enabled', 'true')
+                ->orderBy('extension')
+                ->get(['extension', 'description'])
+                ->filter(fn ($port) => ctype_digit((string) $port->extension))
+                ->map(fn ($port) => [
+                    'label' => filled($port->description) ? $port->extension . ' - ' . $port->description : $port->extension,
+                    'value' => 'fxo:' . $port->extension,
+                ])->values();
+
+            if ($ports->isNotEmpty()) {
+                $options[] = ['label' => __('Public-context extensions'), 'items' => $ports->all()];
+            }
+        }
 
         if (userCheckPermission('bridge_view')) {
             $bridges = Bridge::query()

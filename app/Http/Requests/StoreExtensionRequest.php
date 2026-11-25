@@ -20,7 +20,7 @@ class StoreExtensionRequest extends FormRequest
                 'numeric',
                 new UniqueExtension($this->input('extension_uuid') ?? null),
             ],
-            'directory_first_name'     => ['required', 'string', 'max:60'],
+            'directory_first_name'     => ['required_unless:user_context,public', 'nullable', 'string', 'max:60'],
             'directory_last_name'      => ['nullable', 'string', 'max:60'],
             'effective_caller_id_name' => ['present'],
             'effective_caller_id_number' => ['present'],
@@ -71,7 +71,9 @@ class StoreExtensionRequest extends FormRequest
         $this->merge([
             'effective_caller_id_name' => $fullName,
             'effective_caller_id_number' => $extension,
-            'user_context' => $this->input('user_context', session('domain_name')),
+            'user_context' => userCheckPermission('extension_user_context')
+                ? $this->input('user_context', session('domain_name'))
+                : session('domain_name'),
             'accountcode' => $this->input('accountcode', session('domain_name')),
             'domain_uuid' => $this->input('domain_uuid', session('domain_uuid')),
             'password' => generate_sip_password(),

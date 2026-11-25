@@ -121,7 +121,7 @@ class StoreAssemblyAiConfigRequest extends FormRequest
 
             // 1) General & Language
             'speech_models'    => ['nullable', 'array'],
-            'speech_models.*'  => ['string', Rule::in(['universal-3-pro', 'universal-2'])],
+            'speech_models.*'  => ['string', Rule::in(['assemblyai-stt-3-7', 'universal-3-5-pro', 'universal-3-pro', 'universal-2'])],
             'language_code'    => ['nullable', 'string', 'max:64', Rule::prohibitedIf($this->boolean('language_detection'))], // e.g. en_us
             'keyterms_prompt'  => ['nullable', 'string', 'max:5000'],
             'multichannel'     => ['nullable', 'boolean'],

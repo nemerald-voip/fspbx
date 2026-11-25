@@ -13,6 +13,7 @@ use App\Models\MobileAppUsers;
 use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Models\MobileAppPasswordResetLinks;
@@ -930,17 +931,12 @@ class AppsController extends Controller
 
         try {
             $currentDomain = session('domain_uuid');
-            
-       // Check for limits
-        if (request('status') == 1) {
-            if ($resp = $this->enforceLimit(
-                'mobile_app_users',
-                \App\Models\MobileAppUsers::class,
-                'domain_uuid'
-            )) {
-                return $resp;
+
+            if (request('status') == 1) {
+                if ($resp = $this->enforceLimit('mobile_app_users', MobileAppUsers::class, 'domain_uuid')) {
+                    return $resp;
+                }
             }
-        }
 
             $extension = QueryBuilder::for(Extensions::class)
                 ->select([
@@ -970,11 +966,7 @@ class AppsController extends Controller
 
 
 
-            // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
-            $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
-            if ($hidePassInEmail === null) {
-                $hidePassInEmail = 'false';
-            }
+            $hidePassword = (get_domain_setting('dont_send_user_credentials') ?? 'false') !== 'false';
 
             $params = [
                 'org_id' => request('org_id'),
@@ -993,12 +985,24 @@ class AppsController extends Controller
             // Send request to create user
             $user = $this->ringotelApiService->createUser($params);
 
-            $passwordUrlShow = null;
+            DB::transaction(function () use ($extension, $params, $user) {
+                MobileAppUsers::where('domain_uuid', $extension->domain_uuid)
+                    ->where('extension_uuid', $extension->extension_uuid)->delete();
 
-            // If success and user is activated send user email with credentials
-            if ($user) {
-                if ($hidePassInEmail == 'true' && request('status') == 1) {
-                    // Include get-password link and remove password value
+                $appUser = new MobileAppUsers();
+                $appUser->extension_uuid = $extension->extension_uuid;
+                $appUser->domain_uuid = $extension->domain_uuid;
+                $appUser->org_id = $params['org_id'];
+                $appUser->conn_id = $params['conn_id'];
+                $appUser->user_id = $user['id'];
+                $appUser->status = $user['status'];
+                $appUser->save();
+            });
+            $this->clearRingotelExtensionStatusCache(request('org_id'));
+
+            $qrcode = null;
+            if ((int) $user['status'] === 1) {
+                if ($hidePassword) {
                     $passwordToken = Str::random(40);
                     MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                     $appCredentials = new MobileAppPasswordResetLinks();
@@ -1006,50 +1010,35 @@ class AppsController extends Controller
                     $appCredentials->extension_uuid = $extension->extension_uuid;
                     $appCredentials->domain = $user['domain'];
                     $appCredentials->save();
-
-                    $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
-                    $includePasswordUrl = route('appsGetPasswordByToken', $passwordToken);
-                    $user['password_url'] = $includePasswordUrl;
+                    $user['password_url'] = route('appsGetPasswordByToken', $passwordToken);
+                } else {
+                    $qrcode = base64_encode(QrCode::format('png')->generate(json_encode([
+                        'domain' => $user['domain'],
+                        'username' => $user['username'],
+                        'password' => $user['password'],
+                    ])));
                 }
+
                 if ($extension->email) {
+                    $user['email'] = $extension->email;
                     $this->dispatchAppCredentials($user, $extension->domain_uuid);
                 }
             }
 
-            // Delete any prior info from database
-            MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
-
-            // Save returned user info in database
-            $appUser = new MobileAppUsers();
-            $appUser->extension_uuid = $extension->extension_uuid;
-            $appUser->domain_uuid = $extension->domain_uuid;
-            $appUser->org_id = request('org_id');
-            $appUser->conn_id = request('connection');
-            $appUser->user_id = $user['id'];
-            $appUser->status = $user['status'];
-            $appUser->save();
-            // Log::info($response);
-            $this->clearRingotelExtensionStatusCache(request('org_id'));
-
-            $qrcode = "";
-            if ($hidePassInEmail == 'false') {
-                if (request('status') == 1) {
-                    // Generate QR code
-                    $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
-                        '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
-                }
-            } else {
-                $user['password_url'] = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+            if ($hidePassword) {
                 $user['password'] = null;
+                if (!userCheckPermission('mobile_apps_password_url_show')) {
+                    $user['password_url'] = null;
+                }
             }
 
             return response()->json([
                 'user' => $user,
-                'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
+                'qrcode' => $qrcode,
                 'messages' => ['success' => [__('Mobile app has been enabled')]]
             ]);
         } catch (\Throwable $e) {
-            logger('ExtensionsController@createUser error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            logger('AppsController@createUser error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success'  => false,
                 'errors' => ['error' => [$e->getMessage()]],

@@ -6,12 +6,17 @@ use Illuminate\Mail\Mailables\Content;
 
 class LoginVerificationCode extends BaseMailable
 {
+    public static function defaultSubject(): string
+    {
+        return config('app.name', 'FS PBX').' two factor verification code';
+    }
+
     public function __construct(array $attributes)
     {
         $attributes['greeting_name'] = filled($attributes['name'] ?? null)
             ? ' '.$attributes['name']
             : '';
-        $attributes['email_subject'] = config('app.name', 'FS PBX').' two factor verification code';
+        $attributes['email_subject'] = self::defaultSubject();
 
         parent::__construct($attributes);
         $this->useEmailTemplate('authentication', 'verification-code');

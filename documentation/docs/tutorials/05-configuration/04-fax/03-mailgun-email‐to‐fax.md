@@ -2,7 +2,7 @@
 id: mailgun-email-to-fax
 title: 'Mailgun: Email-to-Fax'
 slug: /configuration/fax/mailgun-email-to-fax
-sidebar_position: 1
+sidebar_position: 3
 ---
 
 # Configure Email‐to‐Fax with Mailgun
@@ -21,9 +21,9 @@ With FS PBX, you can send faxes simply by emailing your documents to a special a
 **1\. Prerequisites**
 ---------------------
 
--   **FS PBX** v0.9.59 or newer
-
 -   **A working Mailgun account** with a verified inbound domain
+
+-   An FS PBX fax number to send from. Follow [Set up a fax number](01-set-up-a-fax-number.md) if you need to create one.
 
 
 * * * * *

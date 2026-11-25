@@ -5,33 +5,36 @@ title: FS PBX API Reference v1
 sidebar_position: 1
 ---
 
-The FS PBX API is organized around REST. Our API has predictable resource-oriented URLs, returns JSON-encoded responses, and uses standard HTTP response codes, authentication, and verbs.
+The FS PBX v1 API lets you manage accounts, extensions, users, and other PBX resources over HTTPS. Use your portal's hostname followed by `/api/v1`.
 
-## Authentication
-Use a **Bearer token** to authenticate requests. You can view and manage your API keys in **FS PBX Dashboard -> Users**.
-All API requests must be made over HTTPS. Calls made over plain HTTP will fail. API requests without authentication will also fail.
+## Make your first request
 
-## Base path
-Use your FS PBX portal URL 
+In **Users**, edit the user your integration will use. Open **API Keys**, choose **Create API Key**, and copy the token. Send it in the `Authorization` header with each request. The API user needs access to the account and the permission listed for the endpoint.
 
-`https://YOUR-FSPBX-HOST/`
+For example, if your user has permission to list accounts, try this request. Replace the hostname and token with your own values.
 
-All endpoints are rooted at:
+```bash
+curl 'https://pbx.example.com/api/v1/domains?limit=10' \
+  -H 'Authorization: Bearer YOUR_API_TOKEN' \
+  -H 'Accept: application/json'
+```
 
-`/api/v1`
+A successful response includes a `data` array. Use the appropriate entry's `domain_uuid` when an endpoint asks for the account UUID in its URL.
 
-## Errors
-FS PBX uses conventional HTTP response codes to indicate the success or failure of an API request. 
-In general: Codes in the 2xx range indicate success. Codes in the 4xx range indicate an error that failed given the information provided 
-(e.g., a required parameter was omitted, a charge failed, etc.). Codes in the 5xx range indicate an error with FS PBX server.
+## Read the next page
 
-## Pagination
+Some lists return a page of results at a time. If the endpoint offers `starting_after`, use the last result to ask for the next page. For example, when listing accounts:
 
-All top-level API resources have support for bulk fetches through “list” API methods. For example, you can **list domains**, **list extensions**, and **list voicemails**. 
-These list API methods share a common structure and accept, at a minimum, the following three parameters: `limit`, and `starting_after`.
+1. Request the first page with `GET /api/v1/domains?limit=10`.
+2. If `has_more` is `true`, copy the **last** entry's `domain_uuid` from `data`. Request `GET /api/v1/domains?limit=10&starting_after=LAST_DOMAIN_UUID`, substituting that value.
+3. Repeat with the last entry from each new page until `has_more` is `false`. Keep the same filters throughout.
 
-The list API methods use cursor-based pagination through the `starting_after` parameter. This parameter accepts an existing object UUID value and return objects in reverse chronological order. 
-It returns objects listed after the named object. 
+Check the individual endpoint for its page size, sort order, and the value to use for `starting_after`. For example, **List users** sorts by user ID in ascending order. Pass the last user's `user_uuid` to continue.
+
+## Handle errors
+
+Check the HTTP status and the endpoint's documented error response. A `401` means you should check the API token. For a `403`, check the API user's account access and permissions. For a validation error, read the response for the field or value to correct.
 
 ## Support
-For issues, file a GitHub issue or contact support.
+
+For help with an API request, contact support or open an issue in the [FS PBX issue tracker](https://github.com/nemerald-voip/fspbx/issues).

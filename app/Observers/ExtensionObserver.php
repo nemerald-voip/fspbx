@@ -60,7 +60,8 @@ class ExtensionObserver
      */
     public function updated(Extensions $extension)
     {
-        if ($extension->wasChanged(['extension', 'number_alias', 'domain_uuid', 'user_context'])) {
+        if ($extension->wasChanged(['extension', 'number_alias', 'domain_uuid', 'user_context'])
+            || ($extension->user_context === 'public' && $extension->wasChanged('effective_caller_id_name'))) {
             app(\App\Services\AgentDirectoryCacheService::class)->extensionsChanged([
                 $extension->getRawOriginal(), $extension->getAttributes(),
             ]);

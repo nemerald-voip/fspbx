@@ -105,6 +105,13 @@ class OutboundRouteService
             return null;
         }
 
+        if (str_starts_with($value, 'fxo:')) {
+            $port = substr($value, 4);
+            // Replace only the SIP user, preserving the registered Sofia profile, transport and NAT path.
+            $dialString = '${regex(${sofia_contact(*/' . $port . '@${domain_name})}|^(.*sofia/[^/]+/)(?:sip:)?[^@]+(@[^,]+)$|%1sip:${callee_id_number}%2)}';
+            return ['type' => 'fxo', 'uuid' => null, 'name' => $port, 'data' => $dialString];
+        }
+
         if (str_starts_with(strtolower($value), 'bridge:')) {
             return ['type' => 'bridge', 'uuid' => null, 'name' => 'bridge', 'data' => substr($value, 7)];
         }
@@ -221,11 +228,12 @@ class OutboundRouteService
                 $order += 10;
             }
 
+            $fxoOnly = $primary['type'] === 'fxo' && collect($fallbacks)->every(fn ($target) => $target['type'] === 'fxo');
             foreach ([
                 'inherit_codec=true',
                 'ignore_display_updates=true',
                 'callee_id_number=$1',
-                'continue_on_fail=true',
+                $fxoOnly ? 'continue_on_fail=USER_BUSY' : 'continue_on_fail=true',
                 'originate_continue_on_timeout=true',
             ] as $data) {
                 $details[] = $this->detail('action', 'set', $data, $order);

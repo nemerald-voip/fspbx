@@ -832,6 +832,7 @@ class ExtensionsController extends Controller
             $extensionDto = ExtensionDetailData::from([
                 'extension_uuid' => '',
                 'extension' => '',
+                'user_context' => session('domain_name'),
                 'email' => '',
                 'directory_first_name' => '',
                 'directory_last_name' => '',
@@ -1774,8 +1775,8 @@ public function store(StoreExtensionRequest $request)
         }
 
         if ($nameChanged) {
-            $firstName = $extensionData['directory_first_name'] ?? $extension->directory_first_name;
-            $lastName = $extensionData['directory_last_name'] ?? $extension->directory_last_name;
+            $firstName = array_key_exists('directory_first_name', $data) ? $data['directory_first_name'] : $extension->directory_first_name;
+            $lastName = array_key_exists('directory_last_name', $data) ? $data['directory_last_name'] : $extension->directory_last_name;
 
             $extensionData['effective_caller_id_name'] = trim(collect([$firstName, $lastName])->filter()->implode(' '));
             $extensionData['effective_caller_id_number'] = $extension->extension;

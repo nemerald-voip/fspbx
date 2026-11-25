@@ -62,6 +62,8 @@ This is what makes multi-tenancy work cleanly:
 
 ## What happens when a DID is called?
 
+To send your main number to a receptionist during opening hours and to voicemail after hours or on holidays, follow [Set up Business Hours](../05-configuration/18-business-hours.md).
+
 Each Phone Number (DID) should be mapped to a **Destination**, such as:
 
 * **Extension** (direct line to a user)

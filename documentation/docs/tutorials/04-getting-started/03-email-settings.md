@@ -7,155 +7,74 @@ sidebar_position: 3
 
 # Configure Email Settings
 
-FS PBX uses Laravel's built-in mailer to send notifications such as voicemail alerts, password resets, license updates, and system messages. Correctly configuring email settings ensures all automated messages are delivered reliably.
+Connect FS PBX to your mail provider so it can send password resets, voicemail notifications, and other outgoing messages. You’ll need SSH access to the PBX, the credentials from your mail provider, and a mailbox where you can receive a test message.
 
-This guide covers email delivery. To translate email subjects and bodies, create a separate template for each language in **Email Templates**; see [Email template languages](/docs/getting-started/language-settings/#email-template-languages). FS PBX selects a saved language version when sending mail and falls back to English if none is available. It does not translate email content automatically.
+## 1. Configure outgoing mail
 
-* * * * *
+On the FS PBX server, open the configuration file.
 
-🧩 Overview
------------
+```bash
+sudo nano /var/www/fspbx/.env
+```
 
-Email delivery is handled through the Laravel `.env` configuration file, located in the root of your FS PBX installation (usually `/var/www/fspbx/.env`).
+### SMTP
 
-You can use several mail transport methods:
+Update the existing `MAIL_` entries with your provider’s SMTP settings. Set `MAIL_FROM_ADDRESS` to an address your provider allows you to send from. `MAIL_FROM_NAME` is the name recipients see in their inbox.
 
-| Method | Description |
+```dotenv
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.example.com
+MAIL_PORT=587
+MAIL_USERNAME=your-smtp-username
+MAIL_PASSWORD="your-smtp-password"
+MAIL_FROM_ADDRESS=pbx@example.com
+MAIL_FROM_NAME="Example Company PBX"
+```
+
+Use the port your provider specifies. On port **587**, FS PBX upgrades the connection to TLS if the server offers STARTTLS. If your provider requires TLS from the start, use port **465**.
+
+For example, these two services can send PBX notifications on port **587** with STARTTLS. Verify your sender address or sending domain with the service you choose.
+
+| SMTP service | `MAIL_HOST` | `MAIL_USERNAME` | `MAIL_PASSWORD` |
+| --- | --- | --- | --- |
+| [Twilio SendGrid](https://www.twilio.com/docs/sendgrid/for-developers/sending-email/integrating-with-the-smtp-api) | `smtp.sendgrid.net` | The literal word `apikey` | A SendGrid API key with **Mail Send** permission |
+| [Postmark](https://postmarkapp.com/developer/user-guide/send-email-with-smtp) | `smtp.postmarkapp.com` | The SMTP token’s **Access Key** | The same token’s **Secret Key** |
+
+For Postmark SMTP, enable SMTP access on your Postmark server and create the SMTP token in your **transactional** message stream’s **Settings**.
+
+### Other delivery options
+
+- **Postmark API** — Set `MAIL_MAILER=postmark` and use the server token, message stream, and sender settings in the [Postmark setup guide](../50-integrations/02-postmark_webhooks.md#configure-email-sending-in-fs-pbx).
+- **Local mail server** — Set `MAIL_MAILER=sendmail` if Postfix or another sendmail-compatible service already handles outgoing mail on this server. Set the sender address and name as shown above.
+- **Log only** — For testing on a development server, `MAIL_MAILER=log` records outgoing messages locally and skips inbox delivery.
+
+## 2. Apply the settings
+
+Save `.env`, then run both commands from the FS PBX installation directory.
+
+```bash
+cd /var/www/fspbx
+sudo -u www-data php artisan config:cache
+sudo -u www-data php artisan horizon:terminate
+```
+
+The first command rebuilds the configuration cache. The second lets Horizon’s queue workers finish their current jobs and exit. On a standard installation, Supervisor restarts Horizon so queued notifications use the new mail settings. Repeat this step whenever you change the mail settings in `.env`.
+
+## 3. Send a test email
+
+1. In FS PBX, open **Status → Logs → Emails** and click **Send Test Email**.
+2. Enter an email address you can check and click **Send**.
+3. Check that the message arrives and that the sender address and name are what you expect.
+
+## If the email does not arrive
+
+In **Status → Logs → Emails**, find the test message by its recipient and time. Click the row and read **Send Log** for any errors or retries.
+
+| What you see | What to check |
 | --- | --- |
-| `smtp` | Use an external mail server (recommended) |
-| `sendmail` | Use the local `sendmail` binary |
-| `log` | Write all outgoing emails to `storage/logs/laravel.log` (for debugging) |
+| Authentication failed or sender rejected | Verify the SMTP credentials and confirm the provider allows the address in `MAIL_FROM_ADDRESS`. |
+| Connection timeout, refusal, or certificate error | Check the provider’s SMTP hostname and port. For a timeout or refusal, also check whether the PBX can reach that port. |
+| **Sent**, but the inbox is empty | Check the recipient’s spam folder and your provider’s delivery or bounce history. **Sent** can mean the provider accepted the message for delivery. |
+| The test arrives, but queued notifications still use the old settings | Repeat the commands in step 2 and run `sudo -u www-data php artisan horizon:status` from `/var/www/fspbx` to check that Horizon is running. |
 
-* * * * *
-
-⚙️ Step 1 -- Locate Your `.env` File
------------------------------------
-
-SSH into your FS PBX server and open the `.env` file:
-
-`sudo nano /var/www/fspbx/.env`
-
-* * * * *
-
-⚙️ Step 2 -- Set Your Mail Driver and Credentials
-------------------------------------------------
-
-Add or edit the following lines.\
-(Replace placeholders with your actual credentials.)
-
-```
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.yourmailserver.com
-MAIL_PORT=587
-MAIL_USERNAME=your_username
-MAIL_PASSWORD=your_password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=pbx@yourdomain.com
-MAIL_FROM_NAME="FS PBX"
-```
-
-> 💡 **Tip:**
->
-> -   If your provider uses SSL on port 465, set `MAIL_ENCRYPTION=ssl`.
->
->
-> -   For unencrypted connections, leave it blank: `MAIL_ENCRYPTION=null`.
-
-* * * * *
-
-⚙️ Step 3 -- Apply Configuration
--------------------------------
-
-After editing `.env`, rebuild the cached configuration so FS PBX recognizes the new mail settings:
-
-`php artisan config:cache`
-
-This step is **required** whenever you change environment variables such as mail credentials, database info, or queue settings.
-
-* * * * *
-
-🧪 Step 4 -- Test Email Delivery
--------------------------------
-
-Log in to your **FS PBX Dashboard** and navigate to the **Users** page.
-
-Create a **new user** (or select an existing one) and open the **Security** tab.
-
-Click **"Reset Password"** to trigger a password-reset email.
-
--   ✅ If you receive the reset email in your inbox, your mail configuration is working correctly.
-
--   ⚠️ If you do **not** receive the message --- or you see an on-screen error --- proceed to the next step to **check the Laravel logs** for more details.
-* * * * *
-
-📄 Step 5 -- Check Logs if It Fails
-----------------------------------
-
-If no email arrives, check Laravel's logs for details:
-
-`tail -f storage/logs/laravel.log`
-
-Look for errors like:
-
--   **Authentication failed** → wrong username/password
-
--   **Connection refused** → firewall or wrong port
-
--   **SSL/TLS error** → wrong encryption mode
-
-* * * * *
-
-
-🧰 Optional -- Use Sendmail (Local MTA)
---------------------------------------
-
-If you prefer local delivery (Postfix/Exim), set:
-
-`MAIL_MAILER=sendmail
-MAIL_FROM_ADDRESS=pbx@yourdomain.com
-MAIL_FROM_NAME="FS PBX"`
-
-Ensure your system's MTA is properly configured and running.
-
-* * * * *
-
-🧰 Optional -- Debugging Mode (Log Driver)
------------------------------------------
-
-If you want to debug email templates without actually sending them:
-
-`MAIL_MAILER=log`
-
-All messages will appear in `storage/logs/laravel.log`.
-
-* * * * *
-
-
-🔍 Example for Gmail SMTP
--------------------------
-
-If using a Gmail or Google Workspace account:
-
-```
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.gmail.com
-MAIL_PORT=587
-MAIL_USERNAME=yourname@gmail.com
-MAIL_PASSWORD=your_app_specific_password
-MAIL_ENCRYPTION=tls
-MAIL_FROM_ADDRESS=yourname@gmail.com
-MAIL_FROM_NAME="FS PBX"
-```
-
-> ⚠️ Gmail requires an *App Password* (not your normal login password).
-
-* * * * *
-
-🧾 Summary
-----------
-
-Once these steps are completed:
-
--   Email and system notifications will start working.
-
--   You can monitor errors in `storage/logs/laravel.log` or via the **Status -> Logs** page in FS PBX.
+To change the wording or language of outgoing messages, see [Email template languages](/docs/getting-started/language-settings/#email-template-languages).

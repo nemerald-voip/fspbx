@@ -2607,6 +2607,20 @@ class DatabaseSeeder extends Seeder
 
         ];
 
+        // Older installations may already have added this provisioning variable as text.
+        $ringCountSetting = 'grandstream_ht8x1_fxo_number_of_rings';
+        if (!DefaultSettings::where('default_setting_category', 'provision')
+            ->where('default_setting_subcategory', $ringCountSetting)->exists()) {
+            $settings[] = [
+                'default_setting_category'    => 'provision',
+                'default_setting_subcategory' => $ringCountSetting,
+                'default_setting_name'        => 'numeric',
+                'default_setting_value'       => '2',
+                'default_setting_enabled'     => true,
+                'default_setting_description' => 'Number of incoming rings before either HT841 or HT881 FXO profile forwards the call to FS PBX.',
+            ];
+        }
+
         if (empty($settings)) {
             return;
         }

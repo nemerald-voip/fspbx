@@ -441,6 +441,22 @@ class DeviceAuthorizationTest extends TestCase
         $this->getJson('/api/devices/'.self::SHARED.'/provisioning-preview')->assertNotFound()->assertJsonValidationErrors('template');
     }
 
+    public function test_ht8x1_uses_tcp_for_an_unset_line_transport_and_honors_explicit_udp(): void
+    {
+        $device = Devices::findOrFail(self::LOCAL);
+        $device->device_vendor = 'grandstream';
+        $template = new \App\Models\ProvisioningTemplate(['vendor' => 'grandstream', 'name' => 'HT8x1']);
+        $build = new \ReflectionMethod(ProvisioningController::class, 'buildTemplateVars');
+        $controller = app(ProvisioningController::class);
+        $this->assertSame('TCP', $build->invoke($controller, $device, $template)['lines'][1]['sip_transport']);
+        $template->name = 'HT80x';
+        $this->assertSame('UDP', $build->invoke($controller, $device, $template)['lines'][1]['sip_transport']);
+        DB::table('v_device_lines')->where('device_uuid', self::LOCAL)->update(['sip_transport' => 'UDP']);
+        $device->unsetRelation('lines');
+        $template->name = 'HT8x1';
+        $this->assertSame('UDP', $build->invoke($controller, $device, $template)['lines'][1]['sip_transport']);
+    }
+
     public function test_preview_masks_configured_credentials_before_rendering_and_handset_receives_originals(): void
     {
         $this->permissions('device_provisioning_preview');

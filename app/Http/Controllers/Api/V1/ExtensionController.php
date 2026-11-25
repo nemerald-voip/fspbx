@@ -1122,6 +1122,13 @@ class ExtensionController extends Controller
             ? (string) $inputs['directory_first_name']
             : (string) ($extension->directory_first_name ?? '');
 
+        if ($first === '' && ($inputs['user_context'] ?? $oldContext) !== 'public'
+            && (array_key_exists('directory_first_name', $inputs) || isset($inputs['user_context']))) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'directory_first_name' => [__('The first name field is required.')],
+            ]);
+        }
+
         $last = array_key_exists('directory_last_name', $inputs)
             ? (string) ($inputs['directory_last_name'] ?? '')
             : (string) ($extension->directory_last_name ?? '');
