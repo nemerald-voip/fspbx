@@ -242,7 +242,28 @@ try {
             self.assertIn("config:clear", command.call_args.args[0])
             self.assertTrue(sql.call_args.args[2].startswith("ALTER DATABASE fusionpbx SET fspbx.restored"))
 
-    def test_installer_database_is_removed_only_after_success(self):
+    def test_start_includes_installed_services_even_when_disabled(self):
+        listing = ("cron.service enabled enabled\n"
+                   "php7.4-fpm.service masked enabled\n"
+                   "php8.4-fpm.service enabled enabled\n"
+                   "supervisor.service disabled enabled\n"
+                   "freeswitch.service enabled enabled\n")
+        with patch.object(restore, "run", return_value=subprocess.CompletedProcess([], 0, listing)) as command:
+            self.assertEqual(restore.installed_pbx_services(),
+                             ["php8.4-fpm.service", "freeswitch.service", "supervisor.service", "cron.service"])
+            self.assertIn("list-unit-files", command.call_args.args[0])
+            self.assertIn("php*-fpm.service", command.call_args.args[0])
+
+    def test_failed_service_start_reports_retry_and_attempts_remaining_services(self):
+        services = ["nginx.service", "supervisor.service", "cron.service"]
+        failure = subprocess.CalledProcessError(1, ["systemctl", "start", "nginx.service"])
+        with patch.object(restore, "run", side_effect=[failure, None, None]) as command:
+            with self.assertRaisesRegex(ValueError, r"Data restore completed.*systemctl start nginx\.service$"):
+                restore.start_pbx_services(services)
+            self.assertEqual([call.args[0] for call in command.call_args_list],
+                             [["systemctl", "start", unit] for unit in services])
+
+    def test_cleanup_and_service_start_only_after_success(self):
         with ExitStack() as stack:
             stub = lambda name, **kw: stack.enter_context(patch.object(restore, name, **kw))
             stub("pg_environment", return_value={})
@@ -251,16 +272,25 @@ try {
             stub("installer_database_exists", return_value=False)
             stub("standalone")
             stub("activate_database")
+            services = ["php8.4-fpm.service", *restore.PBX_SERVICES]
+            stub("installed_pbx_services", return_value=services)
             files = stub("install_files", side_effect=OSError("fixture file copy failed"))
             stub("install_environment")
             command = stub("run")
-            args = (self.stage, {"cluster": "archive"}, {}, b"recovered", set(), "", False, False)
+            args = (self.stage, {"cluster": "archive"}, {}, b"recovered", set(), "")
             with self.assertRaisesRegex(OSError, "file copy failed"):
-                restore.apply(*args)
-            self.assertFalse(any(call.args[0][0] == "dropdb" for call in command.call_args_list))
+                restore.apply(*args, recover_ha=False, web_tls=False)
+            calls = [call.args[0] for call in command.call_args_list]
+            self.assertIn(["systemctl", "stop", *services], calls)
+            self.assertFalse(any(cmd[0] == "dropdb" or cmd[:2] == ["systemctl", "start"] for cmd in calls))
             files.side_effect = None
-            restore.apply(*args)
-            self.assertEqual(command.call_args.args[0], ["dropdb", "-w", restore.BEFORE])
+            for recover_ha in (False, True):
+                with self.subTest(recover_ha=recover_ha):
+                    command.reset_mock()
+                    restore.apply(*args, recover_ha=recover_ha, web_tls=False)
+                    calls = [call.args[0] for call in command.call_args_list]
+                    cleanup = calls.index(["dropdb", "-w", restore.BEFORE])
+                    self.assertEqual(calls[cleanup + 1:], [["systemctl", "start", unit] for unit in services])
 
     @unittest.skipUnless(os.getuid() == 0, "restored file ownership requires root")
     def test_install_only_the_staged_app_data(self):

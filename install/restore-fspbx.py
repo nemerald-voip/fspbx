@@ -37,7 +37,7 @@ WEB_KEY = "etc/nginx/ssl/private/privkey.pem"
 ASSETS = ("storage/app/frontend", "storage/app/public/frontend", "storage/app/public/vite")
 DB_CONNECTION_KEYS = {"DB_CONNECTION", "DB_HOST", "DB_PORT", "DB_DATABASE", "DB_USERNAME",
                       "DB_PASSWORD", "DATABASE_URL"}
-SERVICES = ("cron", "nginx", "php*-fpm.service", "supervisor", "event_guard", "freeswitch")
+PBX_SERVICES = ("nginx.service", "freeswitch.service", "event_guard.service", "supervisor.service", "cron.service")
 DB_NAME = "fusionpbx"
 BEFORE = "fspbx_before_restore"
 
@@ -377,6 +377,39 @@ def repair_environment(source, manifest):
           "Restart any running application workers and reload PHP-FPM to use the recovered settings.")
 
 
+def installed_pbx_services():
+    result = run(["systemctl", "list-unit-files", "--type=service", "--no-legend", "--no-pager", "--full",
+                  "php*-fpm.service", *PBX_SERVICES], stdout=subprocess.PIPE, text=True)
+    installed = set()
+    for line in result.stdout.splitlines():
+        if line.strip():
+            unit, state, *_ = line.split()
+            if state in ("masked", "masked-runtime"):
+                print(f"Skipping masked systemd unit {unit}.")
+            elif state != "alias":
+                installed.add(unit)
+    php_fpm = sorted(unit for unit in installed if unit.startswith("php") and unit.endswith("-fpm.service"))
+    services = php_fpm + [unit for unit in PBX_SERVICES if unit in installed]
+    if not services:
+        raise ValueError("No startable FS PBX service units found on the replacement.")
+    return services
+
+
+def start_pbx_services(services):
+    print("Starting destination PBX services...", flush=True)
+    failed = []
+    for unit in services:
+        try:
+            run(["systemctl", "start", unit])
+        except subprocess.CalledProcessError:
+            failed.append(unit)
+    if failed:
+        raise ValueError("Data restore completed. Service startup failed for " + ", ".join(failed)
+                         + ". Check the journal for each unit, correct the problem, then run: systemctl start "
+                         + " ".join(failed))
+    print("Started " + ", ".join(services) + ". Check Supervisor workers with supervisorctl status.")
+
+
 def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
     env = pg_environment(target)
     if manifest.get("cluster") == sql(env, DB_NAME, "SELECT system_identifier::text FROM pg_control_system()"):
@@ -404,8 +437,9 @@ def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
              "--no-publications", "--no-subscriptions", *selection, "-d", staging, stage / "database.dump"], env=env)
         if not recover_ha:
             standalone(env, staging)
-        print("Stopping destination PBX services. Keep the replacement isolated until cutover.", flush=True)
-        run(["systemctl", "stop", *SERVICES])
+        services = installed_pbx_services()
+        print("Stopping destination PBX services for the database and file restore.", flush=True)
+        run(["systemctl", "stop", *services])
         activate_database(env, staging)
     except BaseException:
         # Remove only the interrupted staging DB. A successful swap already renamed it.
@@ -437,15 +471,13 @@ def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
             and (APP / "app/Console/Commands/PrepareFreeswitchRestart.php").is_file()):
         run(["runuser", "-u", "www-data", "--", "php", "artisan", "freeswitch:prepare-restart", "--no-interaction"], cwd=APP)
     else:
-        print("Before starting FreeSWITCH, verify the switch and cache directories on this host, "
-              "synchronize Variables and flush the generated FreeSWITCH XML cache for the installed release.")
-    if recover_ha:
-        print("HA cold recovery: keep the scheduler, workers and former nodes offline until replication and ownership are verified.")
+        print("FreeSWITCH variables and XML cache need manual synchronization. Verify the switch and cache "
+              "directories, synchronize Variables and flush the generated XML cache before accepting calls.")
     # Only reached after this invocation successfully renamed the installer DB and finished recovery.
     sql(env, "postgres", f"ALTER DATABASE {DB_NAME} SET fspbx.restored = 'on'")
     run(["dropdb", "-w", BEFORE], env=env)
-    print("Restore applied. The temporary installer database was removed. PBX services are stopped. "
-          "Complete the network and service checks in the recovery guide before accepting traffic.")
+    print("Restore applied. The temporary installer database was removed.", flush=True)
+    start_pbx_services(services)
 
 
 def main():
@@ -453,7 +485,7 @@ def main():
     parser.add_argument("archive", type=Path, help="full backup_YYYY-MM-DD.tgz")
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="validate the backup and installed release (default)")
-    mode.add_argument("--apply", action="store_true", help="replace data on this fresh destination and leave PBX services stopped")
+    mode.add_argument("--apply", action="store_true", help="restore data on this fresh destination and start its PBX services")
     mode.add_argument("--repair-env", action="store_true",
                       help="recover only .env on an already restored replacement using its existing database connection")
     parser.add_argument("--fenced-ha-recovery", action="store_true",
@@ -504,4 +536,4 @@ if __name__ == "__main__":
     try:
         main()
     except (OSError, ValueError, KeyError, tarfile.TarError, EOFError, subprocess.CalledProcessError) as error:
-        sys.exit(f"Restore stopped: {error}")
+        sys.exit(f"FS PBX recovery: {error}")
