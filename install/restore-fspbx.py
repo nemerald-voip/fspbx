@@ -35,12 +35,8 @@ APP_FILES = ("modules_statuses.json", "storage/oauth-private.key", "storage/oaut
 WEB_CHAIN = "etc/nginx/ssl/fullchain.pem"
 WEB_KEY = "etc/nginx/ssl/private/privkey.pem"
 ASSETS = ("storage/app/frontend", "storage/app/public/frontend", "storage/app/public/vite")
-PROVIDERS = (
-    "MAIL_", "MAILGUN_", "POSTMARK_", "AWS_", "OPENAI_", "GOOGLE_", "AZURE_", "WATSON_",
-    "ASSEMBLYAI_", "OPENSEARCH_", "SLACK_", "THINQ_", "COMMIO_", "SINCH_", "VOXUTEL_",
-    "BANDWIDTH_", "CLICKSEND_", "TELNYX_", "APIDAZE_", "BULKVS_", "VOIPMS_", "FIBERNETICS_",
-    "RINGOTEL_", "TIGERTMS_", "SANSAY_", "CERETAX_", "YEALINK_", "POLYCOM_API_", "KEYGEN_",
-)
+DB_CONNECTION_KEYS = {"DB_CONNECTION", "DB_HOST", "DB_PORT", "DB_DATABASE", "DB_USERNAME",
+                      "DB_PASSWORD", "DATABASE_URL"}
 SERVICES = ("cron", "nginx", "php*-fpm.service", "supervisor", "event_guard", "freeswitch")
 DB_NAME = "fusionpbx"
 BEFORE = "fspbx_before_restore"
@@ -60,7 +56,7 @@ def read_small(archive, entry):
     return archive.extractfile(entry).read()
 
 
-def stage_archive(filename, stage):
+def stage_archive(filename, stage, *, environment_only=False):
     """Read gzip once. Only write regular files beneath a new, private staging directory."""
     manifest = None
     roots = set()
@@ -82,6 +78,14 @@ def stage_archive(filename, stage):
                 if not isinstance(manifest, dict) or manifest.get("format") != 1:
                     raise ValueError("Unsupported FS PBX backup format.")
                 continue
+            if name in (APP_MEMBER + "/.env", APP_MEMBER + "/config/version.php"):
+                relative = name[len(APP_MEMBER) + 1:]
+                if relative in metadata:
+                    raise ValueError(f"Duplicate {relative} in backup.")
+                metadata[relative] = read_small(archive, entry)
+                continue
+            if environment_only:
+                continue
             if name in (WEB_CHAIN, WEB_KEY) and entry.isfile():
                 dest = stage / name
                 dest.parent.mkdir(parents=True, exist_ok=True)
@@ -99,11 +103,6 @@ def stage_archive(filename, stage):
             app_root = name.startswith(APP_MEMBER + "/")
             relative = name[len(APP_MEMBER) + 1:] if app_root else name
             if app_root:
-                if relative in (".env", "config/version.php"):
-                    if relative in metadata:
-                        raise ValueError(f"Duplicate {relative} in backup.")
-                    metadata[relative] = read_small(archive, entry)
-                    continue
                 if re.fullmatch(r"Modules/[^/]+/module\.json", relative):
                     modules.add(relative.split("/")[1])
                 if any(within(relative, path) for path in ASSETS):
@@ -159,11 +158,15 @@ def stage_archive(filename, stage):
 
     media = {"var/lib/freeswitch/storage", "var/lib/freeswitch/recordings"}
     required = {"storage/app"} | set((manifest or {}).get("media", media))
-    if not dump or set(metadata) != {".env", "config/version.php"} or required - roots:
-        raise ValueError("Incomplete full backup. The database, application environment, release and PBX media directories are required.")
+    if set(metadata) != {".env", "config/version.php"}:
+        raise ValueError("The backup must contain the application environment and release.")
     version = release(metadata["config/version.php"])
-    if manifest and (dump != manifest["dump"] or APP_MEMBER != manifest["app"] or version != manifest["release"]):
+    if manifest and (APP_MEMBER != manifest["app"] or version != manifest["release"]):
         raise ValueError("Archive contents disagree with the migration metadata.")
+    if environment_only:
+        return manifest or {}, metadata[".env"], version, set(), set()
+    if not dump or required - roots or (manifest and dump != manifest["dump"]):
+        raise ValueError("Incomplete full backup. The expected database and PBX media directories are required.")
     for missing in sorted(media - roots):
         print(f"The source did not back up /{missing}. Verify any external media before cutover.")
     # Materialize validated links only after all archive file writes, deepest first.
@@ -183,7 +186,7 @@ def release(contents):
 def dotenv(contents, entries=False):
     # Use the fresh install's parser for quoted secrets, multiline values and variable expansion.
     parse = (r"\Dotenv\Parser\Lines::process(preg_split('/\r\n|\n|\r/', $s))" if entries
-             else r"\Dotenv\Dotenv::parse($s)")
+             else r"(object) \Dotenv\Dotenv::parse($s)")
     code = ("require 'vendor/autoload.php'; $s=stream_get_contents(STDIN); try { echo json_encode("
             + parse + r", JSON_THROW_ON_ERROR); } catch (\Throwable $e) { exit(1); }")
     result = run(["runuser", "-u", "www-data", "--", "php", "-r", code], cwd=APP,
@@ -191,9 +194,48 @@ def dotenv(contents, entries=False):
     return json.loads(result.stdout)
 
 
+def rewrite_assignments(source, entries, expected, changed):
+    """Edit whole dotenv entries, retaining all intervening comments, blank lines and line endings."""
+    lines = iter(re.findall(r"([^\r\n]*)(\r\n|\r|\n|\Z)", source))
+    pieces = []
+    found = set()
+
+    def assignment(name):
+        value = expected[name]
+        if value is None:  # A bare name unsets the variable in phpdotenv.
+            return name
+        value = value.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("\r", "\\r").replace("\n", "\\n")
+        return f'{name}="{value}"'
+
+    for entry in entries:
+        for line, ending in lines:
+            if line.strip() and not line.lstrip().startswith("#"):
+                break
+            pieces.append(line + ending)
+        block = [line + ending]
+        for _ in range(entry.count("\n")):
+            line, ending = next(lines)
+            block.append(line + ending)
+        name = re.sub(r"^export\s+", "", entry.split("=", 1)[0].strip()).strip("'\"")
+        found.add(name)
+        if name not in changed:
+            pieces.extend(block)
+        elif name in expected:
+            pieces.append(assignment(name) + ending)
+    pieces.extend(line + ending for line, ending in lines)
+    result = "".join(pieces)
+    additions = [name for name in expected if name in changed and name not in found]
+    if additions:
+        newline = next(iter(re.findall(r"\r\n|\r|\n", source)), "\n")
+        if result and not result.endswith(("\r", "\n")):
+            result += newline
+        result += "".join(assignment(name) + newline for name in additions)
+    return result.encode()
+
+
 def prepare_environment(source, manifest):
     source_env = dotenv(source)
-    key = source_env.get("APP_KEY", "")
+    key = source_env.get("APP_KEY") or ""
     if len(base64.b64decode(key[7:], validate=True) if key.startswith("base64:") else key.encode()) != 32:
         raise ValueError("Missing or invalid source APP_KEY.")
     if manifest and (manifest["cipher"] != "AES-256-CBC" or hashlib.sha256(key.encode()).hexdigest() != manifest["key_hash"]):
@@ -201,30 +243,25 @@ def prepare_environment(source, manifest):
     path = APP / ".env"
     if not path.is_file() or path.is_symlink():
         raise ValueError("Expected the fresh installation's regular .env file.")
-    target = path.read_bytes()
-    current = dotenv(target)
-    portable = {k: v for k, v in source_env.items() if k == "APP_KEY" or k.startswith(PROVIDERS)}
-    # Replace complete assignments (including multiline private keys), keeping the other settings intact.
-    contents = target.decode().replace("\r\n", "\n")
-    entries = {}
-    for entry in dotenv(target, entries=True):
-        name = entry.split("=", 1)[0].strip().removeprefix("export ").strip("'\" ")
-        entries.setdefault(name, []).append(entry)
-    for k, v in portable.items():
-        if current.get(k) == v:
-            continue
-        value = v.replace("\\", "\\\\").replace('"', '\\"').replace("$", "\\$").replace("\r", "\\r").replace("\n", "\\n")
-        assignment = f'{k}="{value}"'
-        if k in entries:
-            if len(entries[k]) != 1:
-                raise ValueError(f"Resolve duplicate {k} assignments in the destination .env.")
-            contents = re.sub("^" + re.escape(entries[k][0]) + "$", lambda _: assignment, contents, flags=re.M)
-        else:
-            contents += "\n" + assignment
-    merged = (contents.rstrip("\n") + "\n").encode()
-    if dotenv(merged) != {**current, **portable}:
-        raise ValueError("Environment merge changes dependent settings. Configure the destination .env before retrying.")
-    return current, merged
+    current = dotenv(path.read_bytes())
+    expected = {k: v for k, v in source_env.items() if k not in DB_CONNECTION_KEYS}
+    expected.update({k: v for k, v in current.items() if k in DB_CONNECTION_KEYS})
+    if source_env == expected:
+        return current, source
+    candidate = source
+    actual = source_env
+    changed = set()
+    entries = dotenv(source, entries=True)
+    while actual != expected:
+        missing = object()
+        different = {k for k in actual.keys() | expected.keys() if actual.get(k, missing) != expected.get(k, missing)}
+        if different <= changed:
+            raise ValueError("Could not preserve the archived settings with the local PostgreSQL connection.")
+        # A custom secret may itself reference a DB variable. Preserve its archived effective value.
+        changed.update(different)
+        candidate = rewrite_assignments(source.decode(), entries, expected, changed)
+        actual = dotenv(candidate)
+    return current, candidate
 
 
 def pg_environment(target):
@@ -260,6 +297,14 @@ def activate_database(env, staging):
                          f'ALTER DATABASE {staging} RENAME TO {DB_NAME}; COMMIT;')
 
 
+def restored_database(env):
+    return sql(env, DB_NAME, "SELECT current_setting('fspbx.restored', true) IS NOT DISTINCT FROM 'on'") == "t"
+
+
+def installer_database_exists(env):
+    return sql(env, "postgres", f"SELECT EXISTS(SELECT FROM pg_database WHERE datname='{BEFORE}')") == "t"
+
+
 def web_certificate_available(stage):
     chain, key = stage / WEB_CHAIN, stage / WEB_KEY
     if chain.is_file() and key.is_file():
@@ -275,7 +320,7 @@ def web_certificate_available(stage):
     return False
 
 
-def install_files(stage, roots, merged):
+def install_files(stage, roots):
     for root in sorted(roots):
         src = stage / "files" / root
         if root in APP_FILES:
@@ -292,16 +337,44 @@ def install_files(stage, roots, merged):
         dest.mkdir(exist_ok=True)
         run(["rsync", "-rltpog", "--ignore-times", "--chown=www-data:www-data", "--chmod=Du=rwx,Dg=rx,Do=,Fu=rwX,Fg=rX,Fo=",
              "--", str(src) + "/", str(dest) + "/"])
+
+
+def install_environment(merged, backup_dir=None):
     path = APP / ".env"
+    previous = path.read_bytes()
+    if backup_dir is not None and previous != merged:
+        with tempfile.NamedTemporaryFile(dir=backup_dir, prefix="fspbx-env-before-repair-", delete=False) as saved:
+            saved.write(previous)
+        print(f"Previous destination .env saved privately at {saved.name}.")
+    owner = path.stat()
     with tempfile.NamedTemporaryFile(dir=APP, prefix=".restore-env-", delete=False) as output:
         temporary = Path(output.name)
         try:
             output.write(merged)
             output.flush()
-            os.fchown(output.fileno(), path.stat().st_uid, path.stat().st_gid)
+            os.fchown(output.fileno(), owner.st_uid, owner.st_gid)
             os.replace(temporary, path)
         finally:
             temporary.unlink(missing_ok=True)
+
+
+def repair_environment(source, manifest):
+    target, merged = prepare_environment(source, manifest)
+    env = pg_environment(target)
+    if manifest.get("cluster") == sql(env, DB_NAME, "SELECT system_identifier::text FROM pg_control_system()"):
+        raise ValueError("This is the source PostgreSQL cluster. Repair only the restored replacement.")
+    if target.get("APP_KEY") != dotenv(merged)["APP_KEY"]:
+        raise ValueError("The archived application key does not match the restored replacement.")
+    marked = restored_database(env)
+    if not marked and not installer_database_exists(env):
+        raise ValueError("Environment repair requires a previously restored replacement.")
+    install_environment(merged, backup_dir="/root")
+    run(["runuser", "-u", "www-data", "--", "php", "artisan", "config:clear", "--no-interaction"], cwd=APP)
+    if not marked:
+        # Older restores used the retained installer database as their only restore marker.
+        sql(env, "postgres", f"ALTER DATABASE {DB_NAME} SET fspbx.restored = 'on'")
+    print("Restored the archived application settings with the replacement's PostgreSQL connection. "
+          "Restart any running application workers and reload PHP-FPM to use the recovered settings.")
 
 
 def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
@@ -310,8 +383,8 @@ def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
         raise ValueError("This is the source PostgreSQL cluster. Restore on a fresh replacement.")
     if not manifest.get("cluster") and dotenv(merged)["APP_KEY"] == target.get("APP_KEY"):
         raise ValueError("The destination already uses the archived key. Restore on a fresh installation.")
-    if sql(env, "postgres", f"SELECT EXISTS(SELECT FROM pg_database WHERE datname='{BEFORE}')") != "f":
-        raise ValueError(f"A prior restore retained {BEFORE}. Return to the clean destination snapshot to retry.")
+    if restored_database(env) or installer_database_exists(env):
+        raise ValueError("A prior restore was applied. Return to the clean destination snapshot for a new full restore.")
     standalone(env, DB_NAME)
     staging = "fspbx_restore_" + uuid.uuid4().hex
     run(["createdb", "-w", "-T", "template0", staging], env=env)
@@ -338,14 +411,18 @@ def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
         # Remove only the interrupted staging DB. A successful swap already renamed it.
         run(["dropdb", "-w", "--if-exists", staging], env=env)
         raise
-    install_files(stage, roots, merged)
+    install_files(stage, roots)
+    # Clear the fresh installation's dedicated cache before switching to the recovered cache settings.
+    for command in ("config:clear", "cache:clear"):
+        run(["runuser", "-u", "www-data", "--", "php", "artisan", command, "--no-interaction"], cwd=APP)
+    install_environment(merged)
     if web_tls:
         for member, mode in ((WEB_CHAIN, "0644"), (WEB_KEY, "0600")):
             dest = Path("/") / member
             if dest.resolve() != dest:
                 raise ValueError(f"Resolve the destination certificate link {dest} before restore.")
             run(["install", "-m", mode, "--", stage / member, dest])
-    for command in ("config:clear", "cache:clear", "view:clear"):
+    for command in ("config:clear", "view:clear"):
         run(["runuser", "-u", "www-data", "--", "php", "artisan", command, "--no-interaction"], cwd=APP)
     # The native cache flush removes the contents of the configured directory. On a
     # different host, reconcile any custom paths before using them for writes or cleanup.
@@ -364,7 +441,10 @@ def apply(stage, manifest, target, merged, roots, toc, recover_ha, web_tls):
               "synchronize Variables and flush the generated FreeSWITCH XML cache for the installed release.")
     if recover_ha:
         print("HA cold recovery: keep the scheduler, workers and former nodes offline until replication and ownership are verified.")
-    print(f"Restore applied. The fresh database is retained as {BEFORE}. PBX services are stopped. "
+    # Only reached after this invocation successfully renamed the installer DB and finished recovery.
+    sql(env, "postgres", f"ALTER DATABASE {DB_NAME} SET fspbx.restored = 'on'")
+    run(["dropdb", "-w", BEFORE], env=env)
+    print("Restore applied. The temporary installer database was removed. PBX services are stopped. "
           "Complete the network and service checks in the recovery guide before accepting traffic.")
 
 
@@ -374,6 +454,8 @@ def main():
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--check", action="store_true", help="validate the backup and installed release (default)")
     mode.add_argument("--apply", action="store_true", help="replace data on this fresh destination and leave PBX services stopped")
+    mode.add_argument("--repair-env", action="store_true",
+                      help="recover only .env on an already restored replacement using its existing database connection")
     parser.add_argument("--fenced-ha-recovery", action="store_true",
                         help="recover data from a fully fenced HA installation without restoring replication connections")
     parser.add_argument("--work-dir", type=Path, default=Path("/var/tmp"), help="directory for private temporary files")
@@ -387,9 +469,14 @@ def main():
         raise ValueError("Install rsync on the replacement before applying a restore.")
     with tempfile.TemporaryDirectory(prefix="fspbx-restore-", dir=args.work_dir) as tmp:
         stage = Path(tmp)
-        manifest, source, version, roots, modules = stage_archive(args.archive, stage)
+        manifest, source, version, roots, modules = stage_archive(args.archive, stage, environment_only=args.repair_env)
         if version != release((APP / "config/version.php").read_bytes()):
             raise ValueError(f"Install matching FS PBX release {version} on the destination.")
+        if args.repair_env:
+            with open("/run/lock/fspbx-restore.lock", "a") as lock:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                repair_environment(source, manifest)
+            return
         for module in modules | set(manifest.get("modules", [])):
             if not (APP / "Modules" / module / "module.json").is_file():
                 raise ValueError(f"Install the matching {module} module on the destination.")

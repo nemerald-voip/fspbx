@@ -1,6 +1,7 @@
 """Fixture checks for FS PBX backup packaging and restore. No production services or data."""
 import hashlib
 import importlib.util
+from contextlib import ExitStack
 import json
 import os
 from pathlib import Path
@@ -22,6 +23,14 @@ def put(root, name, data):
     path = root / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
+
+
+def parse_fixture(args, **kwargs):
+    # Use the project's dotenv parser without switching accounts or booting Laravel.
+    if args[:5] != ["runuser", "-u", "www-data", "--", "php"] or args[5] != "-r":
+        raise AssertionError("Unexpected external command in environment fixture")
+    kwargs["cwd"] = REPO
+    return subprocess.run(args[4:], check=True, **kwargs)
 
 
 class RecoveryTests(unittest.TestCase):
@@ -62,7 +71,7 @@ $packer->invoke(new App\Console\Commands\BackupApp, $argv[1], $argv[2], $argv[3]
         self.package()
         result, env, version, roots, modules = restore.stage_archive(self.archive, self.stage)
         self.assertEqual((result, version, modules), (self.manifest, "2.2.8", set()))
-        self.assertIn(KEY.encode(), env)
+        self.assertEqual(env, (self.app / ".env").read_bytes())
         self.assertIn(self.media, roots)
         self.assertEqual((self.stage / "database.dump").read_bytes(), b"fixture dump")
         self.assertEqual((self.stage / "files" / self.media / "voicemail/message.wav").read_bytes(), b"audio")
@@ -109,27 +118,89 @@ $cleanup->invoke(new App\Console\Commands\BackupApp, $argv[1]);
                 with self.assertRaises(ValueError):
                     restore.stage_archive(self.archive, self.stage)
 
-    def test_environment_preserves_target_credentials_and_imports_multiline_secret(self):
-        # Parse fixtures with the installed PHP dotenv library as the account running this test.
-        def local_run(args, **kwargs):
-            return subprocess.run(args[4:] if args[0] == "runuser" else args, cwd=REPO, check=True,
-                                  **{k: v for k, v in kwargs.items() if k != "cwd"})
-
+    def test_complete_environment_with_only_target_postgres_connection(self):
         dest = self.root / "destination"
-        put(dest, ".env", b'APP_KEY=previous\nDB_PASSWORD="new local password"\nFS_ESL_PW=new-esl\n'
-            b'GOOGLE_PRIVATE_KEY="previous\nvalue"\n# keep comment\n')
-        with patch.object(restore, "APP", dest), patch.object(restore, "run", local_run):
-            source = (self.app / ".env").read_bytes() + b'GOOGLE_PRIVATE_KEY="new\\nvalue"\nFS_ESL_PW=old\n'
+        put(dest, ".env", b'APP_KEY=previous\nAPP_URL=https://temporary.example\nDB_PASSWORD="new local password"\n'
+            b'DB_PORT=5433\nSESSION_DOMAIN=temporary.example\nFS_ESL_PW=new-esl\nTARGET_ONLY=unused\n')
+        with patch.object(restore, "APP", dest), patch.object(restore, "run", parse_fixture):
+            source = (f'APP_KEY={KEY}\r\n'.encode() + b'# operator notes\r\n\r\n'
+                      b'APP_NAME="Site PBX"\r\nAPP_URL=https://pbx.example\r\nSESSION_DOMAIN=pbx.example\r\n'
+                      b'SANCTUM_STATEFUL_DOMAINS=pbx.example\r\nQUEUE_CONNECTION=sync\r\nFS_ESL_PW=archived-esl\r\n'
+                      b'MODULE_PRIVATE_KEY="first line\r\nDB_PASSWORD=old\r\n# part of key\r\nlast line"\r\n'
+                      b'DB_PASSWORD=old\r\nCUSTOM_TOKEN="${DB_PASSWORD}"\r\n'
+                      b'DATABASE_URL=postgres://old.example/pbx\r\nDB_TIMEZONE=Europe/London\r\n')
             current, merged = restore.prepare_environment(source, self.manifest)
             settings = restore.dotenv(merged)
-            self.assertEqual(settings["APP_KEY"], KEY)
+            expected = restore.dotenv(source)
+            expected.update(DB_PASSWORD="new local password", DB_PORT="5433")
+            del expected["DATABASE_URL"]
+            self.assertEqual(settings, expected)
             self.assertEqual(settings["DB_PASSWORD"], current["DB_PASSWORD"])
-            self.assertEqual(settings["FS_ESL_PW"], "new-esl")
-            self.assertEqual(settings["GOOGLE_PRIVATE_KEY"], "new\nvalue")
-            self.assertEqual(merged.count(b"APP_KEY="), 1)
-            self.assertIn(b"# keep comment", merged)
+            self.assertIn(b'# operator notes\r\n\r\nAPP_NAME="Site PBX"\r\n', merged)
+            self.assertIn(b'first line\r\nDB_PASSWORD=old\r\n# part of key\r\nlast line', merged)
+            self.assertNotIn(b"TARGET_ONLY", merged)
+            self.assertEqual(merged.count(b"\r\n"), merged.count(b"\n"))
+            put(dest, ".env", merged)
+            self.assertEqual(restore.prepare_environment(source, self.manifest)[1], merged)
             with self.assertRaisesRegex(ValueError, "encryption"):
                 restore.prepare_environment(source, {**self.manifest, "key_hash": "mismatch"})
+
+    def test_matching_database_preserves_exact_archived_bytes(self):
+        dest = self.root / "destination"
+        put(dest, ".env", b'DB_PASSWORD="old"\nINSTALLER_ONLY=irrelevant\n')
+        source = (self.app / ".env").read_bytes() + b"UNKNOWN_SECRET='spaces # $'  # keep this comment"
+        with patch.object(restore, "APP", dest), patch.object(restore, "run", parse_fixture):
+            self.assertEqual(restore.prepare_environment(source, self.manifest)[1], source)
+
+    def test_repair_reads_env_from_backup_without_staging_media_or_dump(self):
+        self.package()
+        manifest, env, version, _, _ = restore.stage_archive(self.archive, self.stage, environment_only=True)
+        self.assertEqual((manifest, env, version), (self.manifest, (self.app / ".env").read_bytes(), "2.2.8"))
+        self.assertEqual(list(self.stage.iterdir()), [])
+
+    def test_environment_repair_requires_matching_restore_and_keeps_existing_databases(self):
+        with ExitStack() as stack:
+            stub = lambda name, **kw: stack.enter_context(patch.object(restore, name, **kw))
+            stub("prepare_environment", return_value=({"APP_KEY": KEY}, b"repaired"))
+            stub("dotenv", return_value={"APP_KEY": KEY})
+            stub("pg_environment", return_value={})
+            sql = stub("sql", return_value="destination")
+            stub("restored_database", return_value=False)
+            retained = stub("installer_database_exists", return_value=False)
+            write = stub("install_environment")
+            command = stub("run")
+            with self.assertRaisesRegex(ValueError, "previously restored"):
+                restore.repair_environment(b"source", {"cluster": "archive"})
+            write.assert_not_called()
+            retained.return_value = True
+            with self.assertRaisesRegex(ValueError, "source PostgreSQL"):
+                restore.repair_environment(b"source", {"cluster": "destination"})
+            write.assert_not_called()
+            restore.repair_environment(b"source", {"cluster": "archive"})
+            write.assert_called_once_with(b"repaired", backup_dir="/root")
+            self.assertEqual(command.call_count, 1)
+            self.assertIn("config:clear", command.call_args.args[0])
+            self.assertTrue(sql.call_args.args[2].startswith("ALTER DATABASE fusionpbx SET fspbx.restored"))
+
+    def test_installer_database_is_removed_only_after_success(self):
+        with ExitStack() as stack:
+            stub = lambda name, **kw: stack.enter_context(patch.object(restore, name, **kw))
+            stub("pg_environment", return_value={})
+            stub("sql", return_value="destination")
+            stub("restored_database", return_value=False)
+            stub("installer_database_exists", return_value=False)
+            stub("standalone")
+            stub("activate_database")
+            files = stub("install_files", side_effect=OSError("fixture file copy failed"))
+            stub("install_environment")
+            command = stub("run")
+            args = (self.stage, {"cluster": "archive"}, {}, b"recovered", set(), "", False, False)
+            with self.assertRaisesRegex(OSError, "file copy failed"):
+                restore.apply(*args)
+            self.assertFalse(any(call.args[0][0] == "dropdb" for call in command.call_args_list))
+            files.side_effect = None
+            restore.apply(*args)
+            self.assertEqual(command.call_args.args[0], ["dropdb", "-w", restore.BEFORE])
 
     @unittest.skipUnless(os.getuid() == 0, "restored file ownership requires root")
     def test_install_only_the_staged_app_data(self):
@@ -139,7 +210,12 @@ $cleanup->invoke(new App\Console\Commands\BackupApp, $argv[1]);
         self.package()
         restore.stage_archive(self.archive, self.stage)
         with patch.object(restore, "APP", dest):
-            restore.install_files(self.stage, {"storage/app"}, b"merged\n")
+            restore.install_files(self.stage, {"storage/app"})
+            restore.install_environment(b"merged\n", backup_dir=self.root)
+            restore.install_environment(b"merged\n", backup_dir=self.root)
+        backup, = self.root.glob("fspbx-env-before-repair-*")
+        self.assertEqual(backup.read_bytes(), b"fresh\n")
+        self.assertEqual(backup.stat().st_mode & 0o777, 0o600)
         self.assertEqual((dest / ".env").read_bytes(), b"merged\n")
         self.assertEqual((dest / ".env").stat().st_mode & 0o777, 0o600)
         logo = dest / "storage/app/public/logo.png"
