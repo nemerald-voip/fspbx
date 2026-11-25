@@ -30,7 +30,7 @@ Use a full FS PBX archive to recover a failed server or move a working PBX to a 
 | --- | --- |
 | Accounts, users, extensions, gateways, call routing, CDRs, settings and native provisioning templates | The full archive includes a PostgreSQL dump. Restored users sign in with their existing credentials. |
 | Voicemail, greetings, faxes, local recordings, custom sounds and hold music, application uploads and branding | The restore copies the standard data directories. The fresh install provides stock sounds and frontend assets. |
-| Encrypted credentials and integrations | The restore imports the source Laravel `APP_KEY` and recognized mail, storage and provider variables. Review custom module variables and referenced credential files separately. |
+| Application settings and secrets | The full archive contains the original `/var/www/fspbx/.env`. The restored application uses its branding, URLs, session domains, encryption key, queue settings and all custom variables and secrets. Only the connection to the replacement's local PostgreSQL database comes from the destination. Back up files referenced by environment variables separately. |
 | FreeSWITCH and legacy provisioning | The restore copies SIP TLS files, legacy provisioning templates and the application's custom FreeSWITCH scripts directory. The archive also carries the standard FreeSWITCH configuration for reviewing local edits. Install matching optional modules and binaries on the replacement. |
 | Web TLS, firewall and host settings | The restore installs a current, matching web certificate and key saved as regular files in the standard Nginx SSL locations. Current full backups also include the standard Nginx site, Dehydrated/Certbot files, FusionPBX configuration and persistent iptables rules when present. Reapply site-specific settings on the replacement. Protect any certificates, key files or hooks stored elsewhere separately. |
 | External data | Protect remote object storage, mounted media, custom upload or sound paths, symlink targets, externally supplied secrets and site-specific services separately. Verify a mounted filesystem is mounted at backup time. Record how to reconnect it on the replacement. |
@@ -50,7 +50,7 @@ If the source is still running, take a full backup. If only `fspbx_pgsql_YYYY-MM
 ## Prepare the replacement
 
 1. Complete a fresh FS PBX installation on a supported Debian release. An existing fresh Debian 13 installation satisfies this step. Match the FS PBX release and optional modules to the backup. The current installer selects the latest published release. If the backup is older, use a matching clean install image or provision the matching release before restoring. Use a PostgreSQL target and client compatible with the source dump, and install any additional PostgreSQL extensions or roles used at the site. Apply application upgrades after verifying recovery. [Installation guide](02-installation.md)
-2. Keep the replacement isolated from production phones, carriers, mail, webhooks, scheduled work and any storage synchronization peers. Use a dedicated local database and cache. Configure the target web hostname, session domains and local event socket credentials. Reserve disk for the archive, uncompressed staging files, installed media and the restored database.
+2. Keep the replacement isolated from production phones, carriers, mail, webhooks, scheduled work and any storage synchronization peers. Use a dedicated local database and cache. Record any cache, event socket or integration endpoints that need to change when the archived configuration is installed. Reserve disk for the archive, uncompressed staging files, installed media and the restored database.
 3. Take a snapshot of the fresh destination, including its database and data volumes. Install `rsync` if needed. Use the restore script from this release or your recovery materials. For an installation that predates the script, copy the trusted `install/restore-fspbx.py` to the replacement.
 4. Transfer a trusted full archive and verify its checksum against the copy recorded off-server. The example uses root shells and a protected SSH destination. Substitute your archive name, backup location and replacement host.
 
@@ -83,9 +83,11 @@ From the same root shell on the replacement, apply the archive. For a rehearsal,
 python3 /var/www/fspbx/install/restore-fspbx.py --apply "$archive"
 ```
 
-The script imports into a separate database first. After a successful import, it stops destination PBX services and switches databases. It retains the fresh database as `fspbx_before_restore`, installs the media with local ownership and merges the application settings. On a standard installation it clears the generated caches and rebuilds FreeSWITCH variables. If the script requests a manual FreeSWITCH sync, verify the switch and cache directories on the replacement, then run `sudo -u www-data php artisan freeswitch:prepare-restart` from `/var/www/fspbx`, or use the Variables sync and XML cache controls available in that release. PBX services stay stopped for host-specific setup.
+The script imports into a separate database first. After a successful import, it stops destination PBX services, switches databases, installs the media, and restores the application environment. It removes the fresh installer's database after the restore steps succeed. Use a fresh replacement and retain its snapshot for rollback.
 
-1. **Web and SIP identity.** Keep the production account domain names used by phones. Review `APP_URL`, `SESSION_DOMAIN` and `SANCTUM_STATEFUL_DOMAINS` in `/var/www/fspbx/.env`. Compare custom integration settings against the archived environment in a root-only location. Check the restore's web certificate message. If it requires a certificate, install the saved full chain and matching private key for the production names, or issue a new certificate. On a standard install Nginx reads `/etc/nginx/ssl/fullchain.pem` and `/etc/nginx/ssl/private/privkey.pem`. Configure renewal on the replacement and check SIP TLS separately. [Web certificate guide](/docs/configuration/web-server/lets-encrypt/)
+On a standard installation the restore clears generated caches and rebuilds FreeSWITCH variables. If the script requests a manual FreeSWITCH sync, verify the switch and cache directories on the replacement, then run `sudo -u www-data php artisan freeswitch:prepare-restart` from `/var/www/fspbx`, or use the Variables sync and XML cache controls available in that release. PBX services stay stopped for host-specific setup.
+
+1. **Web and SIP identity.** The restore brings back the original `APP_URL`, `SESSION_DOMAIN` and `SANCTUM_STATEFUL_DOMAINS`. Keep the production account names used by phones. Review host-specific Redis, FreeSWITCH event socket and integration settings before enabling services. Check the restore's web certificate message. If it requires a certificate, install the saved full chain and matching private key for the production names, or issue a new certificate. On a standard install Nginx reads `/etc/nginx/ssl/fullchain.pem` and `/etc/nginx/ssl/private/privkey.pem`. Configure renewal on the replacement and check SIP TLS separately. [Web certificate guide](/docs/configuration/web-server/lets-encrypt/)
 2. **Host-specific files.** Reattach external storage, reconcile custom FreeSWITCH XML, load required modules, and reapply routing, firewall rules, provider allowlists and renewal hooks. Keep the destination's local database credentials, PHP, service definitions and installed application code. For reference, list saved files with `tar -tzf "$archive"`. Extract individual files to a root-only comparison directory. For example, from the recovery directory:
 
    ```bash
@@ -123,9 +125,26 @@ The script imports into a separate database first. After a successful import, it
 
 6. Register a test phone. Place inbound and outbound calls with two-way audio. Leave and retrieve a new voicemail, play an older message and recording, and check that a new CDR appears. Test provisioning and any queues, fax, messaging or encrypted provider integrations the site uses. Check the scheduled job server and any MAC-specific S3 upload setting. Confirm the next full backup reaches off-server storage.
 
+## Repair the environment after an earlier restore
+
+If the replacement still shows the installer's site name or temporary IP, use the updated restore script with the same full archive. Run it as root on the isolated replacement before returning it to service.
+
+```bash
+cd /root/pbx-recovery
+python3 /var/www/fspbx/install/restore-fspbx.py --repair-env "$archive"
+```
+
+The repair saves a private copy of the current `.env` under `/root` before changing it, recovers the archived settings and clears the Laravel configuration cache. The seven destination connection fields are `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD` and `DATABASE_URL`. The database records and media stay in place. Review any host-specific edits you made after the first restore. Reload PHP-FPM and restart any long-running application workers that were already running.
+
+Older successful restores left the fresh installer database under the name `fspbx_before_restore`. After the repair and acceptance checks, you can remove that database on the replacement. This command prompts for confirmation. Use the destination cluster's port if it differs from the installation default.
+
+```bash
+sudo -u postgres dropdb --interactive --port=5432 fspbx_before_restore
+```
+
 ## Rollback and rehearsal
 
-If the restore fails, read the first reported error. Keep the replacement isolated. An import error leaves the fresh database in use. A later failure can leave files or services partially changed. Restore the clean destination snapshot, correct the missing dependency or backup problem, and rerun. The retained database alone does not roll back files or keys.
+If the restore fails, read the first reported error. Keep the replacement isolated. An import error leaves the fresh database in use. A failure after the switch can leave files or services partially changed and the installer database temporarily named `fspbx_before_restore`. Restore the clean destination snapshot, correct the problem, and rerun.
 
 During a planned move, you can direct traffic back to the fenced source after taking the replacement offline. If the replacement has already accepted calls or changes, preserve its new data and reconcile the two recovery points before switching back. After a total loss, retry on a clean replacement using another verified backup. Keep the archive and snapshot until operators have accepted the recovered service.
 
