@@ -29,7 +29,7 @@ class MessageMediaIngestor
         foreach ($mediaUrls as $url) {
             try {
                 messaging_webhook_debug('Downloading media', [
-                    'url' => $url,
+                    'url' => str_starts_with($url, 'vi-inline://') ? 'vi-inline://[redacted]' : $url,
                 ]);
 
                 $downloaded = $parser->downloadMedia($url);

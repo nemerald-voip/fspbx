@@ -3,6 +3,16 @@
 return [
     'configs' => [
         [
+            'name' => 'voipinnovations_messaging',
+            'signature_validator' => \App\Http\Webhooks\SignatureValidators\VoipInnovationsSignatureValidator::class,
+            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\VoipInnovationsWebhookProfile::class,
+            'webhook_response' => \Spatie\WebhookClient\WebhookResponse\DefaultRespondsTo::class,
+            'webhook_model' => \App\Models\VoipInnovationsWebhookCall::class,
+            'store_headers' => [],
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessVoipInnovationsWebhookJob::class,
+        ],
+
+        [
             /*
              * Voxutel's Message Broker uses the same payload format as Sinch,
              * but receives its own endpoint, credentials, and provider identity.

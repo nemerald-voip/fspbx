@@ -115,6 +115,8 @@ Route::webhooks('webhook/clicksend/sms', 'clicksend_messaging');
 Route::webhooks('webhook/apidaze/sms', 'apidaze_messaging');
 Route::webhooks('webhook/bulkvs/sms', 'bulkvs_messaging');
 Route::webhooks('webhook/voipms/sms', 'voipms_messaging');
+Route::webhooks('webhook/voipinnovations/sms/{key}', 'voipinnovations_messaging')
+    ->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class]);
 Route::webhooks('webhook/fibernetics/sms', 'fibernetics_messaging', 'get');
 Route::post('webhook/fibernetics/sms', FiberneticsMmsWebhookController::class)
     ->name('webhook.fibernetics.mms');
