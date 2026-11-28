@@ -23,6 +23,20 @@ class SharedRoutingDestinationTest extends TestCase
         session(['domain_name' => 'example.test', 'domain_uuid' => RoutingDestinations::DOMAIN]);
         $expected = ['action' => $application, 'data' => $data];
 
+        if ($type === 'custom_dialplans') {
+            \Illuminate\Support\Facades\DB::table('v_dialplans')->insert([
+                'dialplan_uuid' => RoutingDestinations::TARGET,
+                'domain_uuid' => RoutingDestinations::DOMAIN,
+                'dialplan_name' => 'Custom Route',
+                'dialplan_number' => $value,
+                'dialplan_context' => 'default',
+                'dialplan_enabled' => 'true',
+                'dialplan_destination' => 'true',
+                'dialplan_xml' => '<action application="transfer"/>',
+                'dialplan_order' => 1,
+            ]);
+        }
+
         $phone = buildDestinationAction(['type' => $type, 'extension' => $value], 'example.test');
         $this->assertSame($application, $phone['destination_app']);
         $this->assertSame($data, $phone['destination_data']);
@@ -32,6 +46,9 @@ class SharedRoutingDestinationTest extends TestCase
         foreach ([\App\Http\Requests\Api\V1\StorePhoneNumberRequest::class, \App\Http\Requests\Api\V1\UpdatePhoneNumberRequest::class] as $requestClass) {
             $payload = ['routing_options' => [['type' => $type, 'extension' => $value]]];
             $request = new $requestClass($payload);
+            if ($type === 'custom_dialplans') {
+                $request->setRouteResolver(fn () => (object) ['domain_uuid' => RoutingDestinations::DOMAIN]);
+            }
             $rules = array_intersect_key($request->rules(), array_flip(['routing_options.*.type', 'routing_options.*.extension']));
             $validator = \Illuminate\Support\Facades\Validator::make($payload, $rules);
             $this->assertTrue($validator->passes(), $validator->errors()->toJson());
