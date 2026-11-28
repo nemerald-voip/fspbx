@@ -124,12 +124,11 @@ Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');
 Route::webhooks('/webhook/assemblyai', 'assemblyai');
 
-// Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
-Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
-Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'update'])
-    ->middleware('throttle:2,1')
-    ->name('email-challenge.new-code');
-Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'store']);
+Route::middleware('guest:web')->controller(App\Http\Controllers\Auth\EmailChallengeController::class)->group(function () {
+    Route::get('/email-challenge', 'create')->name('email-challenge.login');
+    Route::put('/email-challenge', 'update')->middleware('throttle:2,1')->name('email-challenge.new-code');
+    Route::post('/email-challenge', 'store')->middleware('throttle:two-factor');
+});
 
 // Intentionally public: MMS carriers fetch these attachment URLs without a portal
 // session or credentials. The message UUID is the bearer link: anyone who obtains
@@ -183,6 +182,7 @@ Route::get('/voicemails/messages/{message_uuid}/public-download', [VoicemailMess
     ->name('voicemails.messages.public-download');
 
 Route::group(['middleware' => 'auth'], function () {
+    Route::get('/my-account', App\Http\Controllers\MyAccountController::class)->name('my-account');
 
     // Extensions
     Route::get('extensions', [ExtensionsController::class, 'index'])->name('extensions.index');

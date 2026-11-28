@@ -2,177 +2,112 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Inertia\Inertia;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 use App\Jobs\EmailLoginChallengeCode;
+use App\Models\UserAdvFields;
+use App\Services\Auth\PendingLogin;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Cookie;
-use App\Providers\RouteServiceProvider;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
 use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
+use Laravel\Fortify\Features;
 use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
 
 class EmailChallengeController extends Controller
 {
-    /**
-     * Generate and store a new email challenge code.
-     *
-     * @param  mixed  $user
-     */
-    protected function generateAndStoreCode($user)
-    {
-        $code = random_int(100000, 999999);
-        Session::put('code', $code);
-        Session::put('code_expiration', now()->addMinutes(10));
-        logger('Your 2FA code is ' . $code);
-        $attributes = [
-            'domain_uuid' => $user->domain_uuid,
-            'name' => optional($user->user_adv_fields)->first_name ?? '',
-            'email' => $user->user_email,
-            'code' => $code,
-        ];
-
-        EmailLoginChallengeCode::dispatch($attributes)->onQueue('emails');
-    }
-
-    /**
-     * Show the email challenge view.
-     *
-     * @param  TwoFactorLoginRequest  $request
-     * @return \Inertia\Response
-     */
     public function create(TwoFactorLoginRequest $request)
     {
-        if (!$request->hasChallengedUser()) {
-            throw new HttpResponseException(redirect()->route('login'));
+        if (! $request->hasChallengedUser()) {
+            return redirect()->route('login');
         }
-
-        if (!Session::has('code')) {
-            $this->generateAndStoreCode($request->challengedUser());
+        if (! $request->session()->has('login.email_sent')) {
+            if ($request->session()->get('login.method') === 'authenticator') {
+                return redirect()->route('two-factor.login');
+            }
+            $this->sendCode($request);
         }
-
-        return Inertia::render('Auth/TwoFactorEmailChallenge', [
-            'links' => [
-                'email-challenge' => "/email-challenge",
-            ],
-            'status' => session('status'),
-        ]);
+        return $this->view($request);
     }
 
-    /**
-     * Attempt to authenticate a new session using the email challenge code.
-     *
-     * @param  TwoFactorLoginRequest  $request
-     * @return mixed
-     */
-    public function store(TwoFactorLoginRequest $request)
-    {
-        $request->validate([
-            'code' => [
-                'required',
-                'max:6',
-                function ($attribute, $value, $fail) {
-                    if ((string) $value !== (string) session('code')) {
-                        $fail(__('Supplied authentication code is invalid.'));
-                    }
-                    if (now()->greaterThan(session('code_expiration'))) {
-                        $fail(__('The code has expired.'));
-                    }
-                },
-            ],
-            'remember' => [
-                'nullable',
-            ]
-        ]);
-
-        Auth::login($request->challengedUser());
-        $request->session()->regenerate();
-
-        // If request has remember option then store browser details
-        if ($request->get('remember')) {
-            $this->storeCookieIfNotInDB($request);
-        }
-
-        // return app(TwoFactorLoginResponse::class);
-        if ($request->session()->has('url.intended')) {
-            return Inertia::location(session('url.intended'));
-        }
-
-        return redirect()->intended(RouteServiceProvider::HOME);
-    }
-
-    /**
-     * Process request to create a new email challenge code.
-     *
-     * @param  TwoFactorLoginRequest  $request
-     * @return mixed
-     */
     public function update(TwoFactorLoginRequest $request)
     {
-        if ($request->hasChallengedUser()) {
-            // erase previous values
-            Session::forget('code');
-            Session::forget('code_expiration');
-
-            // Generate new code
-            $this->generateAndStoreCode($request->challengedUser());
+        if (! $request->hasChallengedUser()) {
+            return redirect()->route('login');
         }
-
-        return Inertia::render('Auth/TwoFactorEmailChallenge', [
-            'links' => [
-                'email-challenge' => "/email-challenge",
-            ],
-            'status' => __('Verification code has been resent'),
-        ]);
+        $resent = $request->session()->has('login.email_sent');
+        $this->sendCode($request);
+        $response = redirect()->route('email-challenge.login');
+        return $resent ? $response->with('status', __('Verification code has been resent')) : $response;
     }
 
-    /**
-     * Store the cookie if it is not in the database.
-     *
-     * @param  TwoFactorLoginRequest  $request
-     * @return void
-     */
-    protected function storeCookieIfNotInDB($request)
+    private function sendCode(TwoFactorLoginRequest $request): void
     {
         $user = $request->challengedUser();
-        $userAdvFields = $user->user_adv_fields; // Load the related UserAdvFields model
+        $key = PendingLogin::emailKey($request);
+        Cache::lock($key.'.lock', 10)->block(3, function () use ($key, $user, $request) {
+            $previous = Cache::get($key);
+            do {
+                $code = (string) random_int(100000, 999999);
+                $digest = hash_hmac('sha256', $code, config('app.key'));
+            } while ($digest === $previous);
+            $expires = now()->addMinutes(10);
+            EmailLoginChallengeCode::dispatch([
+                'domain_uuid' => $user->domain_uuid,
+                'name' => $user->first_name,
+                'email' => $user->user_email,
+                'code' => $code,
+            ])->onQueue('emails');
+            Cache::put($key, $digest, $expires);
+            $request->session()->put('login.email_sent', true);
+        });
+    }
 
-        // Check if user_adv_fields is null; if so, create a new instance and associate it with the user
-        if ($userAdvFields === null) {
-            $userAdvFields = new \App\Models\UserAdvFields();
-            $userAdvFields->user_uuid = $user->user_uuid;
-            $userAdvFields->save();
-
-            // Associate the new UserAdvFields instance with the user
-            $user->user_adv_fields()->save($userAdvFields);
-        }
-
-
-        // Decode the existing two_factor_cookies, or initialize an empty array if null
-        $two_factor_cookies = json_decode($userAdvFields->two_factor_cookies, true) ?? [];
-
-        $two_factor_cookie = Cookie::get('__TWO_FACTOR_EMAIL');
-
-        if (!in_array($two_factor_cookie, $two_factor_cookies)) {
-            $two_factor_cookie = md5($request->header('User-Agent') . ' ' . $request->ip());
-            $two_factor_cookies[] = $two_factor_cookie;
-
-            // Limit the array to the last 3 cookies
-            if (count($two_factor_cookies) > 3) {
-                array_shift($two_factor_cookies);
+    public function store(TwoFactorLoginRequest $request)
+    {
+        $user = $request->challengedUser();
+        $request->validate(['code' => ['required', 'string', 'regex:/^[0-9]{6}$/D']]);
+        $key = PendingLogin::emailKey($request);
+        Cache::lock($key.'.lock', 10)->block(3, function () use ($key, $request) {
+            $digest = Cache::get($key);
+            if (! $digest) {
+                throw ValidationException::withMessages(['code' => __('The code has expired.')]);
             }
+            if (! hash_equals($digest, hash_hmac('sha256', $request->input('code'), config('app.key')))) {
+                throw ValidationException::withMessages(['code' => __('Supplied authentication code is invalid.')]);
+            }
+            Cache::forget($key);
+        });
 
-            // Ensure unique values
-            $two_factor_cookies = array_unique($two_factor_cookies);
-
-            // Encode and save the updated cookies back to the UserAdvFields model
-            $userAdvFields->two_factor_cookies = json_encode($two_factor_cookies);
-            $userAdvFields->save(); // Save the changes to the database
-
-            $lifetime = 60 * 24 * 7; //7 days
-            Cookie::queue('__TWO_FACTOR_EMAIL', $two_factor_cookie, $lifetime);
-            // Cookie::queue('__TWO_FACTOR_EMAIL',$two_factor_cookie,5); // For testing. 5 minutes lifetime only
+        if ($request->boolean('remember') && $this->canRemember($request)) {
+            $token = Str::random(64);
+            $user->updateAdvancedFields(function (UserAdvFields $fields) use ($token) {
+                $tokens = json_decode($fields->two_factor_cookies ?? '[]', true) ?: [];
+                $tokens[] = $token;
+                $fields->two_factor_cookies = json_encode(array_slice($tokens, -3));
+            });
+            Cookie::queue('__TWO_FACTOR_EMAIL', $token, 7 * 24 * 60);
         }
+
+        Auth::guard('web')->login($user);
+        $request->session()->regenerate();
+        return app(TwoFactorLoginResponse::class);
+    }
+
+    private function canRemember(TwoFactorLoginRequest $request): bool
+    {
+        return $request->session()->get('login.method') === 'email' && Features::enabled('remember-cookie');
+    }
+
+    private function view(TwoFactorLoginRequest $request)
+    {
+        return Inertia::render('Auth/TwoFactorChallenge', [
+            'method' => 'email',
+            'authenticatorEnabled' => $request->challengedUser()->hasEnabledTwoFactorAuthentication(),
+            'canRemember' => $this->canRemember($request),
+            'status' => session('status'),
+        ]);
     }
 }

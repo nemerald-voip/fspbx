@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Extensions;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Support\Localization\ValidationMessages;
 use Illuminate\Validation\Rule;
@@ -37,6 +38,32 @@ class StoreOutboundRouteRequest extends FormRequest
     public function messages(): array
     {
         return ValidationMessages::common();
+    }
+
+    public function after(): array
+    {
+        return [function ($validator) {
+            $ports = collect($this->only('gateway', 'gateway_2', 'gateway_3'))
+                ->filter(fn ($value) => is_string($value) && str_starts_with(trim($value), 'fxo:'))
+                ->map(fn ($value) => substr(trim($value), 4));
+            if ($ports->isEmpty() || $validator->errors()->isNotEmpty()) {
+                return;
+            }
+            if (!session('domain_uuid') || $this->input('domain_uuid') !== session('domain_uuid')
+                || $this->input('dialplan_context') !== session('domain_name')) {
+                $validator->errors()->add('dialplan_context', __('Select the current account and its context to route through an FXO port.'));
+                return;
+            }
+            $available = userCheckPermission('extension_view')
+                ? Extensions::where('domain_uuid', session('domain_uuid'))->where('user_context', 'public')
+                    ->where('enabled', 'true')->whereIn('extension', $ports->values())->pluck('extension')->all()
+                : [];
+            foreach ($ports as $field => $number) {
+                if (!ctype_digit($number) || !in_array($number, $available, true)) {
+                    $validator->errors()->add($field, __('Select an enabled public-context extension in this account.'));
+                }
+            }
+        }];
     }
 
     public function attributes(): array

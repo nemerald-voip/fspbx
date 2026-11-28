@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
@@ -51,103 +52,64 @@ class HandleFaxTxEventJob implements ShouldQueue
 
     public function handle(): void
     {
-        $outboundFaxUuid = $this->data['outbound_fax_uuid'] ?? null;
-        $attemptUuid     = $this->data['outbound_fax_attempt_uuid'] ?? null;
+        $this->recordResult();
+    }
 
-        if (!$outboundFaxUuid) {
-            fax_webhook_debug('HandleFaxTxEventJob: missing outbound_fax_uuid, dropping', $this->data);
-            return;
+    /** Returns true only when delivery of this exact attempt is recorded. */
+    public function recordResult(?OutboundFax $missingAttempt = null): bool
+    {
+        $id = $this->data['outbound_fax_uuid'] ?? null;
+        $attempt = $this->data['outbound_fax_attempt_uuid'] ?? null;
+        if (!Str::isUuid($id) || !Str::isUuid($attempt)) {
+            return false;
         }
 
-        $fax = OutboundFax::find($outboundFaxUuid);
-        if (!$fax) {
-            fax_webhook_debug('HandleFaxTxEventJob: outbound_fax row not found', [
-                'outbound_fax_uuid' => $outboundFaxUuid,
+        return DB::transaction(function () use ($id, $attempt, $missingAttempt) {
+            $fax = OutboundFax::lockForUpdate()->find($id);
+            if (!$fax || $fax->current_attempt_uuid !== $attempt
+                || (isset($this->data['domain_uuid']) && $this->data['domain_uuid'] !== $fax->domain_uuid)) {
+                return false;
+            }
+            if ($fax->status !== 'sending') {
+                return $fax->status === 'sent';
+            }
+            // A setup UUID may have arrived, or a concurrent scan may have seen
+            // the carrier again, between the absence check and this lock.
+            if ($missingAttempt && ($fax->call_uuid !== $missingAttempt->call_uuid
+                || $fax->sending_host !== $missingAttempt->sending_host
+                || !$fax->channel_missing_since?->equalTo($missingAttempt->channel_missing_since))) {
+                return false;
+            }
+
+            // A pre-upgrade worker could have persisted the wire result and
+            // exited before updating the parent. Finish that outcome once.
+            $log = $fax->logs()->where('domain_uuid', $fax->domain_uuid)
+                ->where('outbound_fax_attempt_uuid', $attempt)
+                ->reorder()->orderByRaw("CASE WHEN fax_success = '1' THEN 0 ELSE 1 END")
+                ->orderByDesc('fax_date')->first();
+            if (!$log || ((string) $log->fax_success !== '1' && (string) ($this->data['fax_success'] ?? '') === '1')) {
+                $log = $this->writeFaxLog($fax, $log);
+            }
+
+            $delivered = (string) $log->fax_success === '1';
+            if ($delivered || $fax->retry_count >= $fax->retry_limit) {
+                if ($delivered) {
+                    $this->writeFaxFile($fax, $log);
+                }
+                $fax->update(['status' => $delivered ? 'sent' : 'failed', 'channel_missing_since' => null]);
+                DB::afterCommit(fn () => SendFaxNotificationJob::dispatch($id));
+                return $delivered;
+            }
+
+            $delay = self::RETRY_BASE_SECONDS + self::RETRY_BACKOFF_STEP * max(0, $fax->retry_count - 1);
+            $fax->update([
+                'status' => $this->isBusyResult($this->data) ? 'busy' : 'trying',
+                'retry_at' => now(),
+                'channel_missing_since' => null,
             ]);
-            return;
-        }
-
-        // Anti-stale: ignore webhooks from attempts the row has moved past.
-        // (The reaper may have superseded an orphaned earlier attempt; that
-        //  earlier call eventually hung up and posted a stale webhook.)
-        if ($attemptUuid && $fax->current_attempt_uuid && $attemptUuid !== $fax->current_attempt_uuid) {
-            fax_webhook_debug('HandleFaxTxEventJob: stale attempt webhook, ignoring', [
-                'outbound_fax_uuid'        => $outboundFaxUuid,
-                'webhook_attempt_uuid'     => $attemptUuid,
-                'row_current_attempt_uuid' => $fax->current_attempt_uuid,
-            ]);
-            return;
-        }
-
-        // Already at a terminal state — duplicate webhook, skip.
-        if ($fax->isTerminal()) {
-            fax_webhook_debug('HandleFaxTxEventJob: row already terminal, ignoring', [
-                'outbound_fax_uuid' => $outboundFaxUuid,
-                'status'            => $fax->status,
-            ]);
-            return;
-        }
-
-        // Always write the attempt log first — the troubleshooting history
-        // needs to capture every attempt regardless of next decision.
-        $log = $this->writeFaxLog($fax);
-
-        // Decide next step from the wire outcome.
-        $faxSuccess  = (string) ($this->data['fax_success'] ?? '0');
-        $isBusy      = $this->isBusyResult($this->data);
-        $retriesLeft = $fax->retry_count < $fax->retry_limit;
-
-        if ($faxSuccess === '1') {
-            $this->writeFaxFile($fax, $log);
-
-            fax_webhook_debug('HandleFaxTxEventJob: fax succeeded', [
-                'outbound_fax_uuid' => $outboundFaxUuid,
-                'pages_transferred' => $this->data['fax_document_transferred_pages'] ?? null,
-                'pages_total'       => $this->data['fax_document_total_pages'] ?? null,
-            ]);
-
-            $fax->update(['status' => 'sent']);
-            SendFaxNotificationJob::dispatch($outboundFaxUuid);
-            return;
-        }
-
-        if (!$retriesLeft) {
-            fax_webhook_debug('HandleFaxTxEventJob: retries exhausted, marking failed', [
-                'outbound_fax_uuid' => $outboundFaxUuid,
-                'retry_count'       => $fax->retry_count,
-                'retry_limit'       => $fax->retry_limit,
-                'fax_result_code'   => $this->data['fax_result_code'] ?? null,
-                'fax_result_text'   => $this->data['fax_result_text'] ?? null,
-            ]);
-
-            $fax->update(['status' => 'failed']);
-            SendFaxNotificationJob::dispatch($outboundFaxUuid);
-            return;
-        }
-
-        // Schedule the retry. Backoff grows with each subsequent attempt
-        // so we don't pummel a misbehaving receiver.
-        $delaySeconds = self::RETRY_BASE_SECONDS
-            + (self::RETRY_BACKOFF_STEP * max(0, (int) $fax->retry_count - 1));
-
-        // Mark the row pending — busy is tracked separately so the dashboard
-        // can show "line was busy" vs. a generic transmission failure.
-        $fax->update([
-            'status'   => $isBusy ? 'busy' : 'trying',
-            'retry_at' => now(),
-        ]);
-
-        fax_webhook_debug('HandleFaxTxEventJob: scheduling retry', [
-            'outbound_fax_uuid' => $outboundFaxUuid,
-            'fax_attempt'       => (int) $fax->retry_count,
-            'next_attempt'      => (int) $fax->retry_count + 1,
-            'delay_seconds'     => $delaySeconds,
-            'is_busy'           => $isBusy,
-            'fax_result_code'   => $this->data['fax_result_code'] ?? null,
-            'fax_result_text'   => $this->data['fax_result_text'] ?? null,
-        ]);
-
-        SendFaxJob::dispatch($outboundFaxUuid)->delay(now()->addSeconds($delaySeconds));
+            DB::afterCommit(fn () => SendFaxJob::dispatch($id)->delay(now()->addSeconds($delay)));
+            return false;
+        });
     }
 
     /**
@@ -155,10 +117,10 @@ class HandleFaxTxEventJob implements ShouldQueue
      * One row per attempt — joining v_fax_logs by outbound_fax_uuid gives the
      * full history of what happened across retries.
      */
-    private function writeFaxLog(OutboundFax $fax): FaxLogs
+    private function writeFaxLog(OutboundFax $fax, ?FaxLogs $log): FaxLogs
     {
-        $log = new FaxLogs();
-        $log->fax_log_uuid                   = (string) Str::uuid();
+        $log ??= new FaxLogs();
+        $log->fax_log_uuid ??= (string) Str::uuid();
         $log->domain_uuid                    = $fax->domain_uuid;
         $log->fax_uuid                       = $fax->fax_uuid;
         $log->outbound_fax_uuid              = $fax->outbound_fax_uuid;
@@ -168,10 +130,12 @@ class HandleFaxTxEventJob implements ShouldQueue
         // as the destination — not what we want. The row has what we set.
         $log->source                         = $fax->source;
         $log->destination                    = $fax->destination;
+        $log->fax_retry_attempts             = $fax->retry_count;
+        $log->fax_retry_limit                = $fax->retry_limit;
         $log->fax_success                    = $this->stringOrNull($this->data['fax_success'] ?? null);
         $log->fax_result_code                = $this->numericOrNull($this->data['fax_result_code'] ?? null);
         $log->fax_result_text                = $this->stringOrNull($this->data['fax_result_text'] ?? null);
-        $log->fax_file                       = $this->stringOrNull($this->data['fax_file'] ?? $fax->file_path);
+        $log->fax_file                       = $this->stringOrNull($this->data['fax_file'] ?? null) ?? $fax->file_path;
         $log->fax_ecm_used                   = $this->stringOrNull($this->data['fax_ecm_used'] ?? null);
         $log->fax_local_station_id           = $this->stringOrNull($this->data['fax_local_station_id'] ?? null);
         $log->fax_document_transferred_pages = $this->numericOrNull($this->data['fax_document_transferred_pages'] ?? null);
@@ -182,7 +146,8 @@ class HandleFaxTxEventJob implements ShouldQueue
         $log->fax_transfer_rate              = $this->numericOrNull($this->data['fax_transfer_rate'] ?? null);
         $log->fax_uri                        = $this->stringOrNull($this->data['fax_uri'] ?? null);
         $log->fax_duration                   = $this->numericOrNull($this->data['billsec'] ?? $this->data['duration'] ?? null);
-        $faxEpoch                            = $this->numericOrNull($this->data['end_epoch'] ?? null) ?? time();
+        $faxEpoch = $this->numericOrNull($this->data['end_epoch'] ?? null);
+        $faxEpoch = $faxEpoch > 0 ? $faxEpoch : now()->timestamp;
         $log->fax_date                       = Carbon::createFromTimestamp($faxEpoch, 'UTC');
         $log->fax_epoch                      = $faxEpoch;
         $log->save();

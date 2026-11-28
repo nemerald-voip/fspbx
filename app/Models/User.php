@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Models\UserGroup;
+use App\Services\Auth\AuthenticatorSettings;
+use Closure;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
@@ -268,6 +271,25 @@ class User extends Authenticatable
         // Attempt to load the two_factor_cookies from UserAdvFields if not loaded already.
         // This uses lazy loading; consider eager loading in the query if performance is a concern.
         return $this->user_adv_fields->two_factor_cookies ?? null;
+    }
+
+    public function replaceRecoveryCode($code)
+    {
+        app(AuthenticatorSettings::class)->replaceRecoveryCode($this, $code);
+    }
+
+    public function updateAdvancedFields(Closure $change): void
+    {
+        DB::transaction(function () use ($change) {
+            // Lock the user first because older accounts may not have a companion row yet.
+            static::withoutEagerLoads()->whereKey($this->getKey())->lockForUpdate()->firstOrFail();
+            $fields = $this->user_adv_fields()->lockForUpdate()->firstOrNew();
+            $change($fields);
+            if ($fields->isDirty()) {
+                $fields->save();
+            }
+            $this->setRelation('user_adv_fields', $fields);
+        });
     }
 
     public function settings()

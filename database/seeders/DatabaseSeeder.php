@@ -1843,6 +1843,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 'backup_keep_count',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '5',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => 'Number of dated full backup archives to keep locally. Enter a whole number of 1 or more.',
+            ],
+            [
+                'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 'check_fax_service_status',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "false",
@@ -2598,6 +2606,20 @@ class DatabaseSeeder extends Seeder
 
 
         ];
+
+        // Older installations may already have added this provisioning variable as text.
+        $ringCountSetting = 'grandstream_ht8x1_fxo_number_of_rings';
+        if (!DefaultSettings::where('default_setting_category', 'provision')
+            ->where('default_setting_subcategory', $ringCountSetting)->exists()) {
+            $settings[] = [
+                'default_setting_category'    => 'provision',
+                'default_setting_subcategory' => $ringCountSetting,
+                'default_setting_name'        => 'numeric',
+                'default_setting_value'       => '2',
+                'default_setting_enabled'     => true,
+                'default_setting_description' => 'Number of incoming rings before either HT841 or HT881 FXO profile forwards the call to FS PBX.',
+            ];
+        }
 
         if (empty($settings)) {
             return;

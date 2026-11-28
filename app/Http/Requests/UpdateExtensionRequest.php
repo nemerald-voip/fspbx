@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Extensions;
 use App\Rules\UniqueExtension;
 use App\Services\PhoneNumberService;
 use Illuminate\Foundation\Http\FormRequest;
@@ -24,7 +25,17 @@ class UpdateExtensionRequest extends FormRequest
     public function rules()
     {
         return [
-            'directory_first_name'     => ['required', 'string', 'max:60'],
+            'directory_first_name'     => ['present', Rule::requiredIf(function () {
+                if ($this->filled('directory_first_name')) {
+                    return false;
+                }
+                if ($this->has('user_context') && userCheckPermission('extension_user_context')) {
+                    return $this->input('user_context') !== 'public';
+                }
+                return ! Extensions::whereKey($this->route('extension'))
+                    ->where('domain_uuid', session('domain_uuid'))
+                    ->where('user_context', 'public')->exists();
+            }), 'nullable', 'string', 'max:60'],
             'directory_last_name'      => ['nullable', 'string', 'max:60'],
             'effective_caller_id_name' => ['present'],
             'effective_caller_id_number' => ['present'],

@@ -414,7 +414,7 @@ class FreeswitchEslService
             return null;
         }
 
-        if ($response) {
+        if ($response !== '') {
             // Check if the response is a valid JSON string
             if ($this->isValidJson($response)) {
                 return json_decode($response, true); // Decode JSON response as an associative array

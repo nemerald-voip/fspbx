@@ -192,7 +192,7 @@ class ProvisioningController extends Controller
             ], 404);
         }
 
-        $vars = $this->maskPreviewCredentials($this->buildTemplateVars($device));
+        $vars = $this->maskPreviewCredentials($this->buildTemplateVars($device, $tpl));
         $files = [];
 
         foreach ($this->discoverPreviewFlavors($tpl, $device) as $flavor) {
@@ -355,7 +355,7 @@ class ProvisioningController extends Controller
         ?array $baseVars = null
     ): array {
         try {
-            $vars = $baseVars ?? $this->buildTemplateVars($device);
+            $vars = $baseVars ?? $this->buildTemplateVars($device, $tpl);
 
             provisioning_debug('ProvisioningController: template variables built', [
                 'device_uuid' => (string) $device->device_uuid,
@@ -594,7 +594,7 @@ class ProvisioningController extends Controller
         return null;
     }
 
-    private function buildTemplateVars(Devices $device): array
+    private function buildTemplateVars(Devices $device, ?ProvisioningTemplate $tpl = null): array
     {
         provisioning_debug('ProvisioningController: loading provisioning relationships', [
             'device_uuid' => (string) $device->device_uuid,
@@ -711,6 +711,8 @@ class ProvisioningController extends Controller
 
         $this->applyAutomaticLineDisplayNames($device, $settings['line_display_name_format'] ?? null);
 
+        $defaultTransport = $tpl?->vendor === 'grandstream' && ($tpl->base_template ?? $tpl->name) === 'HT8x1'
+            ? 'TCP' : null;
         $lines = [];
         foreach ($device->lines as $line) {
             $isSharedLine = $this->isSharedLineValue($line->shared_line ?? null);
@@ -726,7 +728,7 @@ class ProvisioningController extends Controller
                 'outbound_proxy_primary'   => $line->outbound_proxy_primary ?? null,
                 'outbound_proxy_secondary' => $line->outbound_proxy_secondary ?? null,
                 'sip_port'          => $line->sip_port ?? null,
-                'sip_transport'     => $this->normalizeTransportForVendor($device->device_vendor, $line->sip_transport),
+                'sip_transport'     => $this->normalizeTransportForVendor($device->device_vendor, $line->sip_transport ?: $defaultTransport),
                 'register_expires'  => $line->register_expires ?? null,
                 'shared_line'       => $isSharedLine,
                 'line_type_id'      => $isSharedLine ? 'sharedline' : 'line',

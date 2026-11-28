@@ -3,28 +3,30 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
-use App\Actions\Fortify\RedirectToEmailChallengeIf2FAIsNotEnabled;
+use App\Actions\Fortify\AuthenticateWebUser;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Mail\ResetPasswordMail;
-use App\Models\DefaultSettings;
+use App\Models\User;
 use App\Services\LdapUserAuthenticator;
 use App\Support\Localization\LocaleRegistry;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
+use App\Http\Requests\PendingTwoFactorLoginRequest;
+use App\Http\Responses\CompletedTwoFactorLogin;
+use Laravel\Fortify\Contracts\TwoFactorLoginResponse;
+use Laravel\Fortify\Http\Requests\TwoFactorLoginRequest;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Laravel\Fortify\Actions\AttemptToAuthenticate;
+use App\Actions\Fortify as AccountActions;
+use Laravel\Fortify\Actions as FortifyActions;
 use Laravel\Fortify\Actions\CanonicalizeUsername;
 use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
 use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
-use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
-use Laravel\Fortify\Features;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -34,7 +36,12 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(TwoFactorLoginRequest::class, PendingTwoFactorLoginRequest::class);
+        $this->app->bind(TwoFactorLoginResponse::class, CompletedTwoFactorLogin::class);
+        $this->app->bind(FortifyActions\EnableTwoFactorAuthentication::class, AccountActions\EnableTwoFactorAuthentication::class);
+        $this->app->bind(FortifyActions\ConfirmTwoFactorAuthentication::class, AccountActions\ConfirmTwoFactorAuthentication::class);
+        $this->app->bind(FortifyActions\DisableTwoFactorAuthentication::class, AccountActions\DisableTwoFactorAuthentication::class);
+        $this->app->bind(FortifyActions\GenerateNewRecoveryCodes::class, AccountActions\GenerateNewRecoveryCodes::class);
     }
 
     /**
@@ -75,18 +82,16 @@ class FortifyServiceProvider extends ServiceProvider
             );
         });
 
-        Fortify::authenticateThrough(function () {
-            logger('Checking email challenge enabled status...'  . $this->emailChallengeEnabled());
-            return [
-                config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
-                config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
-                Features::enabled(Features::twoFactorAuthentication()) ? RedirectIfTwoFactorAuthenticatable::class : null,
-                $this->emailChallengeEnabled() ? RedirectToEmailChallengeIf2FAIsNotEnabled::class : null,
-                AttemptToAuthenticate::class,
-                PrepareAuthenticatedSession::class,
-            ];
-        });
+        Fortify::confirmPasswordsUsing(fn (User $user, ?string $password) =>
+            app(LdapUserAuthenticator::class)->confirmPassword($user, (string) $password)
+        );
 
+        Fortify::authenticateThrough(fn () => array_filter([
+            config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
+            config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
+            AuthenticateWebUser::class,
+            PrepareAuthenticatedSession::class,
+        ]));
 
         RateLimiter::for('login', function (Request $request) {
             $throttleKey = Str::transliterate(Str::lower($request->input(Fortify::username())).'|'.$request->ip());
@@ -140,26 +145,4 @@ class FortifyServiceProvider extends ServiceProvider
         });
     }
 
-    protected function emailChallengeEnabled(): bool
-    {
-        if (! Features::enabled('email-challenge')) {
-            return false;
-        }
-
-        try {
-            return Cache::remember('settings.email_challenge_enabled', 3600, function () {
-                $value = DefaultSettings::where('default_setting_category', 'authentication')
-                    ->where('default_setting_subcategory', 'email_challenge')
-                    ->where('default_setting_name', 'boolean')
-                    ->where('default_setting_enabled', true)
-                    ->value('default_setting_value');
-
-                // logger('default_setting_value raw: ' . var_export($value, true));
-
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-            });
-        } catch (\Throwable $e) {
-            return false;
-        }
-    }
 }

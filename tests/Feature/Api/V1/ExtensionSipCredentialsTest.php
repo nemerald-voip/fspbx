@@ -318,12 +318,53 @@ class ExtensionSipCredentialsTest extends TestCase
         $this->assertDatabaseHas('v_extensions', ['extension_uuid' => self::FOREIGN_EXTENSION, 'user_context' => 'foreign.example.test']);
     }
 
+    public function test_only_public_ports_can_be_created_or_edited_with_a_blank_caller_name(): void
+    {
+        $this->createExtensionWriteTables();
+        $this->grant('extension_add', 'extension_user_context');
+        $url = '/api/v1/domains/'.self::DOMAIN.'/extensions';
+        $payload = ['extension' => '2121', 'voicemail_enabled' => false];
+        $this->postJson($url, $payload)->assertStatus(400)->assertJsonPath('error.param', 'directory_first_name');
+        $uuid = $this->postJson($url, $payload + ['user_context' => 'public'])->assertCreated()->json('extension_uuid');
+        $port = $url.'/'.$uuid;
+        $this->patchJson($port, ['directory_first_name' => 'Copper'])->assertOk();
+        $this->patchJson($port, ['directory_first_name' => null, 'directory_last_name' => null])->assertOk();
+        $this->assertDatabaseHas('v_extensions', ['extension_uuid' => $uuid, 'effective_caller_id_name' => '']);
+        $this->patchJson($port, ['user_context' => 'local.example.test'])->assertStatus(400)->assertJsonPath('error.param', 'directory_first_name');
+        $this->patchJson($port, ['user_context' => 'local.example.test', 'directory_first_name' => 'Desk'])->assertOk();
+        $this->patchJson($port, ['directory_first_name' => null])->assertStatus(400);
+    }
+
     public function test_password_reset_clears_the_registration_cache_for_a_public_context_extension(): void
     {
         DB::table('v_extensions')->where('extension_uuid', self::EXTENSION)->update(['user_context' => 'public']);
         $this->postJson($this->endpoint('regenerate-sip-credentials'))->assertOk()->assertJsonPath('domain', 'public');
         $this->assertFileDoesNotExist($this->cacheFile());
         $this->assertFileExists($this->cacheFile(true));
+    }
+
+    public function test_web_form_allows_blank_names_only_for_the_effective_public_context(): void
+    {
+        $this->createExtensionWriteTables();
+        session(['domain_uuid' => self::DOMAIN, 'domain_name' => 'local.example.test', 'permissions' => []]);
+        $validate = function (string $method, array $input) {
+            $class = $method === 'POST' ? \App\Http\Requests\StoreExtensionRequest::class : \App\Http\Requests\UpdateExtensionRequest::class;
+            $request = $class::create('/extensions/'.self::EXTENSION, $method, $input + ['directory_first_name' => null, 'extension' => '1001']);
+            $route = (new \Illuminate\Routing\Route($method, 'extensions/{extension}', fn () => null))->bind($request);
+            $request->setRouteResolver(fn () => $route);
+            $request->setContainer(app());
+            $request->prepareForValidation();
+            $this->assertSame('', $request->input('effective_caller_id_name'));
+            return validator($request->all(), ['directory_first_name' => $request->rules()['directory_first_name']])->passes();
+        };
+        $this->assertFalse($validate('POST', ['user_context' => 'public']));
+        $this->assertFalse($validate('PUT', ['user_context' => 'public']));
+        DB::table('v_extensions')->where('extension_uuid', self::EXTENSION)->update(['user_context' => 'public']);
+        $this->assertTrue($validate('PUT', []));
+        session(['permissions' => [(object) ['permission_name' => 'extension_user_context']]]);
+        $this->assertTrue($validate('POST', ['user_context' => 'public']));
+        $this->assertTrue($validate('PUT', ['user_context' => 'public']));
+        $this->assertFalse($validate('PUT', ['user_context' => 'local.example.test']));
     }
 
     public function test_scribe_describes_the_optional_context_on_both_extension_write_routes(): void
@@ -334,7 +375,7 @@ class ExtensionSipCredentialsTest extends TestCase
             $parameters = (new Extractor())->processRoute($route)->bodyParameters;
             $this->assertSame('user_context', array_key_last($parameters));
             if ($method === 'POST') {
-                $this->assertSame(['extension', 'directory_first_name', 'voicemail_enabled'], array_slice(array_keys($parameters), 0, 3));
+                $this->assertSame(['extension', 'voicemail_enabled', 'directory_first_name'], array_slice(array_keys($parameters), 0, 3));
             }
             $field = $parameters['user_context'];
             $this->assertFalse($field->required);

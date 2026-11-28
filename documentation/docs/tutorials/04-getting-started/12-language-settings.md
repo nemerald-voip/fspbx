@@ -7,11 +7,12 @@ sidebar_position: 12
 
 # Language Settings and Sounds
 
-FS PBX has separate language settings for the web interface, email templates, and the audio callers hear. This guide explains how to select an interface language, create email templates in another language, and configure call audio.
+Use this guide to choose the language of the web interface, set regional date and time formats, create email templates in another language, and configure the audio callers hear.
 
 | What you want to change | Where to configure it |
 | --- | --- |
-| Buttons, forms, and messages in the web interface | **System Settings** or **Account Settings → General → Language**. |
+| Buttons, forms, and messages in the web interface | **General → Regional → Language** in **System Settings** or **Account Settings**. |
+| Dates and times in Call History, fax, voicemail, and messages | Choose [date and time formats](#date-and-time-formats) under **General → Regional**. |
 | Navigation menu labels | Edit labels in **Menu Manager**. Assign the menu under **System Settings → General → Navigation** or **Account Settings → General → Navigation**. |
 | Email subjects and bodies | **Email Templates**. Create a separate template for each language and email purpose; see [Email template languages](#email-template-languages). |
 | System voice prompts, such as voicemail menus, spoken numbers, and dates | Install a FreeSWITCH sound pack, check speech-module and phrase support, and update **Advanced → Variables**. |
@@ -67,6 +68,21 @@ Assign a saved menu in either location. Both lists show each menu's name and lan
 After changing an assignment, affected users need to sign out and back in to load the selected menu. Account overrides take precedence over the system default; user-level menu overrides are not used.
 
 Creating or copying a menu does not assign it automatically. Later catalog updates do not overwrite saved labels, and changing an existing menu's language field does not translate its items.
+
+## Date and time formats
+
+Starting with FS PBX 2.2.7, you can choose how dates and times appear in Call History, fax, voicemail, messages, and administrative logs. Fax, voicemail, and call-transcription emails also use the relevant account's formats and time zone.
+
+| Setting | Available choices | Default |
+| --- | --- | --- |
+| **Date format** | `Jan 31, 2026`, `31/01/2026`, or `2026-01-31` | `Jan 31, 2026` |
+| **Time format** | `3:04 PM` or `15:04` | `3:04 PM` |
+
+1. To set the defaults for all accounts, open **System Settings → General → Regional**, choose **Date format** and **Time format**, and click **Save**.
+2. To override either setting for one account, switch to that account and open **Account Settings → General → Regional**. Choose the format you want to change and click **Save**. For example, you can use a 24-hour clock and still inherit the system date format.
+3. To restore inheritance, clear the account's selection with the **×** beside that field and save. Open **Call History** to check how an existing call's date and time appear.
+
+The **Time Zone** setting controls which local time is shown. Use **Time format** to choose how that time is written.
 
 ## Email template languages
 

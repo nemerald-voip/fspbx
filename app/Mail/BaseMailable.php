@@ -43,7 +43,7 @@ abstract class BaseMailable extends Mailable
                 'mailable' => static::class,
                 'domain_uuid' => $this->attributes['domain_uuid'] ?? null,
                 'recipient' => implode(', ', array_column($this->to, 'address')),
-                'subject' => $this->subject,
+                'subject' => $this instanceof LoginVerificationCode ? LoginVerificationCode::defaultSubject() : $this->subject,
             ];
 
             if ($exception instanceof TransportExceptionInterface) {

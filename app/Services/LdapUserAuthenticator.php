@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\LdapDirectoryUser;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 
 class LdapUserAuthenticator
@@ -13,7 +14,26 @@ class LdapUserAuthenticator
     {
         $user = User::query()->whereRaw('LOWER(user_email) = ?', [strtolower(trim($email))])->first();
 
-        if (! $user || $user->user_enabled !== 'true') {
+        return $user ? $this->verify($user, $password) : null;
+    }
+
+    public function confirmPassword(User $user, string $password): bool
+    {
+        $key = 'account-password:'.$user->getKey();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            abort(429, __('Too Many Requests'));
+        }
+        if ($this->verify($user, $password)) {
+            RateLimiter::clear($key);
+            return true;
+        }
+        RateLimiter::hit($key, 60);
+        return false;
+    }
+
+    private function verify(User $user, string $password): ?User
+    {
+        if ($password === '' || $user->user_enabled !== 'true') {
             return null;
         }
 

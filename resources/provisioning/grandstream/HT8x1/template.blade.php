@@ -1,4 +1,4 @@
-{{-- version: 1.0.0 --}}
+{{-- version: 1.1.0 --}}
 {{-- HT841 / HT881. Parameter reference: ht8x1_config_1.0.11.8.txt from https://www.grandstream.com/support/tools --}}
 {{-- Line 1 = FXS; lines 2-5 = HT841 FXO 1-4; lines 2-9 = HT881 FXO 1-8. --}}
 
@@ -93,6 +93,10 @@ P92921=2
 P3303=1
 # FXO profile 2 wait for PSTN dial tone.
 P92917=1
+# FXO profile 1 Tel URI: 0 = disabled.
+P763=0
+# FXO profile 2 Tel URI: 0 = disabled.
+P563=0
 # FXO profile 1 rings before answering.
 P798=4
 # FXO profile 2 rings before answering.
@@ -175,9 +179,9 @@ PVALUES;
     $set('P842', $settings['grandstream_ht8x1_pstn_ring_thru_fxs'] ?? '0');
 
     foreach ([
-        'stage_method' => ['2', 'P3304', 'P92921'],
-        'wait_for_dial_tone' => ['1', 'P3303', 'P92917'],
-        'number_of_rings' => ['4', 'P798', 'P92925'],
+        'stage_method' => ['1', 'P3304', 'P92921'],
+        'wait_for_dial_tone' => ['0', 'P3303', 'P92917'],
+        'number_of_rings' => ['2', 'P798', 'P92925'],
         'current_disconnect' => ['1', 'P893', 'P593'],
         'current_disconnect_threshold' => ['100', 'P857', 'P657'],
         'disconnect_tone_detection' => ['0', 'P712', 'P92861'],
@@ -189,6 +193,16 @@ PVALUES;
     }
     if (array_key_exists('grandstream_ht8x1_fxo_disconnect_tone', $settings)) {
         $set('P841', $settings['grandstream_ht8x1_fxo_disconnect_tone'], 'PSTN disconnect tone, using Grandstream fxoch channel syntax.');
+    }
+    foreach ([
+        'country' => ['P864', 'P92845', 'FXO country for country-based termination.'],
+        'ac_termination' => ['P899', 'P92841', 'FXO AC termination: 0 = country, 1 = impedance, 2 = auto-detect.'],
+    ] as $setting => [$first, $second, $comment]) {
+        $value = $settings['grandstream_ht8x1_fxo_' . $setting] ?? null;
+        if ($value !== null && $value !== '') {
+            $set($first, $value, $comment);
+            $set($second, $value, $comment);
+        }
     }
 
     $nat = (string) ($settings['grandstream_nat_traversal'] ?? '2');
@@ -234,6 +248,7 @@ PVALUES;
         if ($number === 1) {
             $profileId = 0;
         } else {
+            $profile['from_domain'] = $settings['grandstream_ht8x1_fxo_from_domain'] ?? $profile['from_domain'];
             $key = json_encode($profile);
             if (!isset($fxoProfiles[$key])) {
                 if (count($fxoProfiles) === 2) {

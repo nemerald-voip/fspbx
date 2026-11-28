@@ -23,8 +23,8 @@ class StoreExtensionRequest extends FormRequest
             // extension number is required and must be unique
             'extension' => ['required', 'numeric', new UniqueExtension(null, (string) $this->route('domain_uuid')),],
 
-            'directory_first_name' => ['required', 'string', 'max:60'],
             'voicemail_enabled' => ['required', 'boolean'],
+            'directory_first_name' => ['required_unless:user_context,public', 'nullable', 'string', 'max:60'],
             'directory_last_name'  => ['nullable', 'string', 'max:60'],
 
             'voicemail_mail_to' => ['nullable', 'email', 'max:255'],
@@ -120,13 +120,13 @@ class StoreExtensionRequest extends FormRequest
                 'description' => 'Numeric extension number.',
                 'example' => '1001',
             ],
-            'directory_first_name' => [
-                'description' => 'First name for directory display.',
-                'example' => 'Front',
-            ],
             'voicemail_enabled' => [
                 'description' => 'Set to true to create a mailbox for this extension, or false to skip it.',
                 'example' => 'true',
+            ],
+            'directory_first_name' => [
+                'description' => 'Required for normal extensions. For a public-context gateway port, omit both names to preserve the caller name from the line.',
+                'example' => 'Front',
             ],
             'directory_last_name' => [
                 'description' => 'Last name for directory display.',

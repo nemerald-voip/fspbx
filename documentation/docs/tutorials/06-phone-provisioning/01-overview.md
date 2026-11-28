@@ -100,6 +100,8 @@ Use these guides for the phone's provisioning fields, URL format, and first-down
 | Polycom / Poly VVX | [Enter the server and credentials directly](/docs/phone-provisioning/polycom/) |
 | Yealink SIP phones | [Enter the server and credentials directly](/docs/phone-provisioning/yealink/) |
 | Grandstream GXP / GRP | [Enter the server and credentials directly](/docs/phone-provisioning/grandstream/) |
+| Snom D862 / D865 | [Set the provisioning address in Snom Phone Manager](09-snom.md) |
+| Fanvil X3U / X4U / X5U / X6U | [Set up the static provisioning server](10-fanvil.md) |
 | Sangoma P-Series | [Set up DHCP Option 66](/docs/phone-provisioning/sangoma-p-series/#set-dhcp-option-66) |
 | Sangoma S-Series | [Enter the server and credentials directly](/docs/phone-provisioning/sangoma-s-series/#configure-the-phones-provisioning-server) |
 | Sangoma D-Series | [Set up DHCP Option 66 and Rapid Dial keys](/docs/phone-provisioning/sangoma-d-series/) |

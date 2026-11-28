@@ -55,6 +55,8 @@ After the installer finishes, complete the following setup before putting FS PBX
 
 ## Next steps
 
+If this server is replacing an existing PBX, continue with [Back up and restore FS PBX](05-backup-and-restore.md). For a new deployment, use the same guide to enable full backups and arrange an off-server copy.
+
 Continue with [First Login and Your First Account](/docs/getting-started/first-login-and-your-first-account/#2-set-your-administrator-email-and-password) to update your administrator email and password and create the account for your business.
 
 Before registering phones or connecting a carrier, follow [Network Addresses and FreeSWITCH Variables](/docs/getting-started/network-settings/) to configure your server's local and advertised addresses. The guide covers direct public IPs, NAT, multiple interfaces, and two-server installations.

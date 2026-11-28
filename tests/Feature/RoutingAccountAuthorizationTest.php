@@ -63,6 +63,49 @@ class RoutingAccountAuthorizationTest extends TestCase
         $this->withSession(['permissions' => array_map(fn ($p) => (object) ['permission_name' => $p], $permissions)]);
     }
 
+    public function test_public_ports_are_selected_within_the_account_and_persist_in_hunt_order(): void
+    {
+        foreach (['v_extensions' => ['domain_uuid', 'extension', 'description', 'enabled', 'user_context'],
+            'v_gateways' => ['gateway_uuid', 'domain_uuid', 'gateway', 'enabled']] as $name => $columns) {
+            Schema::create($name, function (Blueprint $table) use ($columns) {
+                foreach ($columns as $column) {
+                    $table->string($column)->nullable();
+                }
+            });
+        }
+        Schema::create('v_dialplan_details', function (Blueprint $table) {
+            foreach ((new \App\Models\DialplanDetails)->getFillable() as $column) {
+                $table->text($column)->nullable();
+            }
+        });
+        foreach ([['921', self::A, 'public'], ['922', self::A, 'public'], ['923', self::B, 'public'], ['924', self::A, 'a.invalid']] as [$port, $account, $context]) {
+            DB::table('v_extensions')->insert(['extension' => $port, 'domain_uuid' => $account, 'user_context' => $context, 'enabled' => 'true']);
+        }
+        $this->grant('outbound_route_add', 'extension_view');
+        $url = '/api/dialplans/outbound-routes';
+        $groups = collect($this->postJson($url.'/options')->assertOk()->json('gateway_options'));
+        $ports = $groups->firstWhere('label', 'Public-context extensions')['items'];
+        $this->assertSame(['fxo:921', 'fxo:922'], array_column($ports, 'value'));
+        $route = ['dialplan_name' => 'Analog', 'gateway' => 'fxo:922', 'gateway_2' => 'fxo:921',
+            'domain_uuid' => self::A, 'dialplan_context' => 'a.invalid', 'dialplan_enabled' => 'true',
+            'dialplan_expression' => '^9(\d{10})$', 'dialplan_order' => 100];
+        $this->postJson($url, ['gateway_2' => 'fxo:923'] + $route)->assertJsonValidationErrors('gateway_2');
+        $this->postJson($url, ['dialplan_context' => 'global'] + $route)->assertJsonValidationErrors('dialplan_context');
+        $uuid = $this->postJson($url, $route)->assertCreated()->json('dialplan_uuids.0');
+        $xml = simplexml_load_string(DB::table('v_dialplans')->where('dialplan_uuid', $uuid)->value('dialplan_xml'));
+        $actions = array_map(fn ($node) => (string) $node['data'], $xml->xpath('//action[@application="bridge"]'));
+        $this->assertCount(2, $actions);
+        $this->assertStringContainsString('sofia_contact(*/922@${domain_name})', $actions[0]);
+        $this->assertStringContainsString('sofia_contact(*/921@${domain_name})', $actions[1]);
+        foreach (['continue_on_fail=USER_BUSY', 'callee_id_number=$1', 'hangup_after_bridge=true'] as $setting) {
+            $this->assertCount(1, $xml->xpath('//action[@application="set" and @data="'.$setting.'"]'));
+        }
+        $mixed = $this->postJson($url, ['gateway_2' => 'enum'] + $route)->assertCreated()->json('dialplan_uuids.0');
+        $this->assertDatabaseHas('v_dialplan_details', ['dialplan_uuid' => $mixed, 'dialplan_detail_data' => 'continue_on_fail=true']);
+        $this->grant('outbound_route_add');
+        $this->postJson($url, $route)->assertJsonValidationErrors('gateway');
+    }
+
     public function test_key_actions_require_edit_and_resolve_the_menu_and_key_in_the_same_account(): void
     {
         $path = '/api/virtual-receptionists/key/';

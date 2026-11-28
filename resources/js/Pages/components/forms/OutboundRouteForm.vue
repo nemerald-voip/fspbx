@@ -91,19 +91,19 @@
 
                                                 <GroupElement name="gateway_group" :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="gateway" :items="gatewayOptions" :groups="true"
+                                                <SelectElement name="gateway" :items="gatewayOptions" :groups="true" @change="selectPortAccount"
                                                     :search="true" :native="false" :label="$t(&quot;Gateway&quot;)" input-type="search"
                                                     autocomplete="off" :placeholder="$t(&quot;Select gateway&quot;)" :floating="false"
                                                     allow-absent :strict="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
-                                                <SelectElement name="gateway_2" :items="gatewayOptions" :groups="true"
+                                                <SelectElement name="gateway_2" :items="gatewayOptions" :groups="true" @change="selectPortAccount"
                                                     :search="true" :native="false" :label="$t(&quot;Alternate Gateway 1&quot;)"
                                                     input-type="search" autocomplete="off" :placeholder="$t(&quot;Optional&quot;)"
                                                     :floating="false" allow-absent :strict="false"
                                                     :columns="{ sm: { container: 4 } }" />
 
-                                                <SelectElement name="gateway_3" :items="gatewayOptions" :groups="true"
+                                                <SelectElement name="gateway_3" :items="gatewayOptions" :groups="true" @change="selectPortAccount"
                                                     :search="true" :native="false" :label="$t(&quot;Alternate Gateway 2&quot;)"
                                                     input-type="search" autocomplete="off" :placeholder="$t(&quot;Optional&quot;)"
                                                     :floating="false" allow-absent :strict="false"
@@ -230,6 +230,15 @@ const defaultValues = computed(() => ({
     dialplan_description: null,
 }));
 
+const isPort = value => typeof value === "string" && value.startsWith("fxo:");
+const selectPortAccount = (value) => {
+    if (isPort(value)) {
+        const account = props.options.current_account;
+        form$.value.el$("domain_uuid")?.update(account.uuid);
+        form$.value.el$("dialplan_context")?.update(account.context);
+    }
+};
+
 const insertPattern = (pattern) => {
     if (!pattern) {
         return;
@@ -244,9 +253,13 @@ const insertPattern = (pattern) => {
 const submitForm = async (FormData, form$) => {
     form$.messageBag.clear();
     Object.values(form$.elements$).forEach(clearErrorsRecursive);
+    const data = { ...form$.requestData };
+    if (!domainOptions.value.length && [data.gateway, data.gateway_2, data.gateway_3].some(isPort)) {
+        data.domain_uuid = props.options.current_account.uuid;
+    }
     return await form$.$vueform.services.axios.post(
         props.options.routes.store_route,
-        form$.requestData,
+        data,
     );
 };
 

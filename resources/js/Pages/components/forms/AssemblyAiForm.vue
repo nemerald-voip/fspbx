@@ -36,7 +36,9 @@
                             :close-on-select="false"
                             :search="true"
                             :items="[
-                                { value: 'universal-3-pro', label: 'Universal 3 Pro' },
+                                { value: 'assemblyai-stt-3-7', label: 'AssemblyAI-STT-3.7' },
+                                { value: 'universal-3-5-pro', label: $t(':model (Deprecated)', { model: 'Universal-3.5 Pro' }) },
+                                { value: 'universal-3-pro', label: $t(':model (Deprecated)', { model: 'Universal 3 Pro' }) },
                                 { value: 'universal-2', label: 'Universal 2' },
                             ]"
                             :label="$t('Speech Models')"

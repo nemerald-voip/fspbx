@@ -22,9 +22,6 @@ return [
 
                 // Match only routes whose domains match this pattern (use * as a wildcard to match any characters). Example: 'api.*'.
                 'domains' => ['*'],
-
-                // [Dingo router only] Match only routes registered under this version. Wildcards are NOT supported.
-                'versions' => ['v1'],
             ],
 
             // Include these routes even if they did not match the rules above.
@@ -233,12 +230,14 @@ INTRO,
             Strategies\Headers\GetFromHeaderAttribute::class,
             Strategies\Headers\GetFromHeaderTag::class,
             [
-                'override',
+                Strategies\StaticData::class,
                 [
-                    'Content-Type' => 'application/json',
-                    'Accept' => 'application/json',
-                ]
-            ]
+                    'data' => [
+                        'Content-Type' => 'application/json',
+                        'Accept' => 'application/json',
+                    ],
+                ],
+            ],
         ],
         'bodyParameters' => [
             Strategies\BodyParameters\GetFromFormRequest::class,

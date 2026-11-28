@@ -38,23 +38,24 @@ Each FXO port has its own credentials. FXO ports can share up to **two combinati
 
 ### Incoming telephone-line calls
 
-For each FXO port, add an enabled setting under **Advanced** named `grandstream_ht8x1_fxo_N_destination`, replacing `N` with the physical FXO port number. Set its value to the number that should receive incoming calls in FS PBX, such as an IVR or ring group.
-
-For example, `grandstream_ht8x1_fxo_1_destination` with value `7000` sends calls arriving on **FXO 1** to **7000**. Choose a destination that exists in the gateway's account. Avoid using the extension assigned to that same FXO port, which can route the call back to the telephone line.
+Add the analog line's DID under **Phone Numbers** and choose its destination there. Give the extension that registers the FXO port the `public` context. Under the device's **Advanced** tab, add an enabled setting named `grandstream_ht8x1_fxo_N_destination`, replacing `N` with the physical FXO port number. Enter the DID in a format its inbound route accepts. For example, set `grandstream_ht8x1_fxo_1_destination` to `16105550101` for a North American line with that number.
 
 Set a destination for every telephone line that needs automatic incoming-call routing. A blank or removed destination clears that forwarding setting. Incoming telephone-line calls do not ring the attached FXS phone by default.
 
 ### Outgoing calls and line settings
 
-The default is **two-stage dialing**: call the extension assigned to an FXO port, wait for its dial tone, then dial the outside number. For direct, one-stage dialing, set `grandstream_ht8x1_fxo_stage_method` to `1` and follow the [Bridge and outbound route setup](/docs/phone-provisioning/grandstream-ht8x1-fxo/#outgoing-calls-from-local-extensions). Selecting the template does not create outbound routes.
+The template uses **one-stage dialing**. Create an outbound route to send the dialed number to one or more FXO ports in hunt order. If users currently dial the port extension and wait for a second dial tone, save `grandstream_ht8x1_fxo_stage_method` with value `2` before the next provisioning. [Set up an outbound route](/docs/phone-provisioning/grandstream-ht8x1-fxo/#outgoing-calls-from-local-extensions).
 
 These optional settings go under the device's **Advanced** tab and apply to both FXO connections:
 
 | Name | Values / default |
 | --- | --- |
-| `grandstream_ht8x1_fxo_stage_method` | `1` = direct dialing; `2` = second dial tone (default) |
-| `grandstream_ht8x1_fxo_wait_for_dial_tone` | `1` = wait (default); `0` = do not wait |
-| `grandstream_ht8x1_fxo_number_of_rings` | Rings before answering; default `4` |
+| `grandstream_ht8x1_fxo_stage_method` | `1` for direct dialing (default), `2` for a second dial tone |
+| `grandstream_ht8x1_fxo_wait_for_dial_tone` | `0` to start dialing (default), `1` to wait for the provider's tone |
+| `grandstream_ht8x1_fxo_number_of_rings` | Both FXO profiles wait `2` rings by default. Change the server-wide value under **Default Settings → provision**, or override it for an account or device. Increase it if the provider delivers caller ID later. |
+| `grandstream_ht8x1_fxo_from_domain` | Defaults to the line's server address. An enabled text setting with an empty value clears **From Domain** on both FXO profiles. |
+| `grandstream_ht8x1_fxo_country` | Grandstream country code for country-based AC termination, e.g. `0` for USA or `17` for Canada. Set only if required. |
+| `grandstream_ht8x1_fxo_ac_termination` | `0` for country-based, `1` for impedance-based, `2` for auto-detect. Omit to retain the device setting. |
 | `grandstream_ht8x1_fxo_current_disconnect` | `1` = detect loss of line current (default); `0` = disable |
 | `grandstream_ht8x1_fxo_current_disconnect_threshold` | Disconnect duration in milliseconds; default `100` |
 | `grandstream_ht8x1_fxo_disconnect_tone_detection` | `1` = detect disconnect tone; `0` = disable (default) |

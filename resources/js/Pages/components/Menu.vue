@@ -74,6 +74,12 @@
                                     <p class="text-sm font-medium text-gray-700 truncate">{{ userEmail }}</p>
                                 </div>
                                 <MenuItem v-slot="{ active }">
+                                    <a href="/my-account" :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-x-2 px-4 py-2 text-sm text-gray-600 no-underline']">
+                                        <UserCircleIcon class="h-5 w-5 text-gray-400" />
+                                        {{ $t('My Account') }}
+                                    </a>
+                                </MenuItem>
+                                <MenuItem v-slot="{ active }">
                                     <a href="/logout"
                                         :class="[active ? 'bg-gray-100' : '', 'flex items-center gap-x-2 px-4 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
                                         <ArrowRightOnRectangleIcon class="h-5 w-5 text-gray-400" />

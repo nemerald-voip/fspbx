@@ -6,6 +6,7 @@ use App\Models\DefaultSettings;
 use App\Models\FaxLogs;
 use App\Models\OutboundFax;
 use App\Services\FreeswitchEslService;
+use App\Services\Ha\ActiveNodeResolver;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,13 +26,13 @@ use Throwable;
  *      claim returns 0 rows, another worker already took it; exit silently.
  *   2. Build the dial string with retry-attempt-specific T38/ECM/V17 options
  *      (mirrors the legacy fax_send.php retry ladder).
- *   3. bgapi originate via FreeswitchEslService.
- *   4. Save call_uuid + command + response back to the row.
+ *   3. Save the setup UUID and command, then originate via FreeSWITCH ESL.
+ *   4. Save the response while this attempt still owns the sending row.
  *   5. Job exits — does NOT wait for the call result. The Lua hangup hook
  *      fires a webhook to HandleFaxTxEventJob which decides retry/sent/failed.
  *
- * If the originate command itself is rejected, we revert to 'trying' and
- * let HandleFaxTxEventJob (via webhook) or CheckStuckFaxesJob retry.
+ * An explicit rejection returns the fax to 'trying'. A lost acknowledgement
+ * leaves it 'sending' for the hangup webhook or the local watchdog.
  */
 class SendFaxJob implements ShouldQueue
 {
@@ -103,11 +104,15 @@ class SendFaxJob implements ShouldQueue
                         'retry_limit'       => $fax->retry_limit,
                     ]);
 
-                    OutboundFax::where('outbound_fax_uuid', $fax->outbound_fax_uuid)
+                    $failed = OutboundFax::whereKey($fax->getKey())
+                        ->where('current_attempt_uuid', $fax->current_attempt_uuid)
                         ->whereIn('status', ['waiting', 'trying', 'busy'])
+                        ->whereColumn('retry_count', '>=', 'retry_limit')
                         ->update(['status' => 'failed']);
 
-                    SendFaxNotificationJob::dispatch($fax->outbound_fax_uuid);
+                    if ($failed) {
+                        SendFaxNotificationJob::dispatch($fax->outbound_fax_uuid);
+                    }
                     return;
                 }
 
@@ -117,12 +122,18 @@ class SendFaxJob implements ShouldQueue
 
                 $claimed = OutboundFax::where('outbound_fax_uuid', $fax->outbound_fax_uuid)
                     ->whereIn('status', ['waiting', 'trying', 'busy'])
+                    ->where('current_attempt_uuid', $fax->current_attempt_uuid)
+                    ->whereColumn('retry_count', '<', 'retry_limit')
                     ->update([
                         'status'               => 'sending',
                         'retry_at'             => now(),
                         'retry_count'          => DB::raw('retry_count + 1'),
                         'current_attempt_uuid' => $attemptUuid,
-                        'call_uuid'            => null, // populated below once originate is accepted
+                        'sending_host'         => app(ActiveNodeResolver::class)->hostFingerprint(),
+                        'channel_missing_since' => null,
+                        'call_uuid'            => null,
+                        'command'              => null,
+                        'response'             => null,
                     ]);
 
                 if ($claimed === 0) {
@@ -135,6 +146,9 @@ class SendFaxJob implements ShouldQueue
 
                 // Reload after claim so we have the bumped retry_count.
                 $fax->refresh();
+                if ($fax->current_attempt_uuid !== $attemptUuid || $fax->status !== 'sending') {
+                    return;
+                }
 
                 fax_webhook_debug('SendFaxJob: attempt claimed', [
                     'outbound_fax_uuid' => $fax->outbound_fax_uuid,
@@ -158,22 +172,18 @@ class SendFaxJob implements ShouldQueue
                         'destination'       => $fax->destination,
                     ]);
 
-                    $this->writeSyntheticFaxLog(
-                        fax: $fax,
-                        faxResultText: 'No outbound route matched',
-                    );
-
-                    OutboundFax::where('outbound_fax_uuid', $fax->outbound_fax_uuid)
-                        ->update([
-                            'status'   => 'failed',
-                            'response' => 'no outbound route',
-                        ]);
-
-                    SendFaxNotificationJob::dispatch($fax->outbound_fax_uuid);
+                    $this->recordOriginateFailure($fax, 'failed', 'no outbound route', 'No outbound route matched');
                     return;
                 }
 
                 $command = 'bgapi originate ' . $dialString;
+                $sending = OutboundFax::whereKey($fax->getKey())
+                    ->where('current_attempt_uuid', $attemptUuid)->where('status', 'sending');
+                // Persist the setup leg before the network call. A lost ESL
+                // acknowledgement can still mean FreeSWITCH accepted it.
+                if (!$sending->update(['call_uuid' => $callUuid, 'command' => $command, 'channel_missing_since' => null])) {
+                    return;
+                }
 
                 fax_webhook_debug('SendFaxJob originate prepared', [
                     'outbound_fax_uuid' => $fax->outbound_fax_uuid,
@@ -187,48 +197,17 @@ class SendFaxJob implements ShouldQueue
                         $esl->reconnect();
                     }
 
-                    $response = (string) $esl->executeCommand($command);
-                    $accepted = stripos($response, '+OK') !== false;
-
-                    fax_webhook_debug('SendFaxJob originate response', [
-                        'outbound_fax_uuid' => $fax->outbound_fax_uuid,
-                        'fax_attempt'       => (int) $fax->retry_count,
-                        'accepted'          => $accepted,
-                        'response'          => $response,
-                    ]);
-
-                    OutboundFax::where('outbound_fax_uuid', $fax->outbound_fax_uuid)
-                        ->update([
-                            'command'   => $command,
-                            'response'  => $response,
-                            'call_uuid' => $accepted ? $callUuid : null,
-                            'status'    => $accepted ? 'sending' : 'trying',
-                        ]);
-
-                    if (!$accepted) {
-                        $this->writeSyntheticFaxLog(
-                            fax: $fax,
-                            faxResultText: 'Originate rejected: ' . trim($response),
-                        );
-
-                        fax_webhook_debug('SendFaxJob: originate rejected, will retry', [
-                            'outbound_fax_uuid' => $fax->outbound_fax_uuid,
-                            'response'          => $response,
-                        ]);
-                    }
+                    $response = $esl->executeCommand($command);
                 } catch (Throwable $e) {
-                    logger('SendFaxJob ESL error: ' . $e->getMessage());
-
-                    // Revert to 'trying' so the reaper / next dispatch can retry.
-                    OutboundFax::where('outbound_fax_uuid', $fax->outbound_fax_uuid)
-                        ->where('status', 'sending')
-                        ->update([
-                            'status'   => 'trying',
-                            'response' => 'ESL error: ' . $e->getMessage(),
-                        ]);
-
-                    throw $e; // surface to Horizon so the job retries via $tries
+                    $sending->update(['response' => 'ESL error: ' . $e->getMessage()]);
+                    return;
                 }
+
+                if (is_string($response) && preg_match('/^-ERR\b/i', trim($response))) {
+                    $this->recordOriginateFailure($fax, 'trying', $response, 'Originate rejected: ' . trim($response));
+                    return;
+                }
+                $sending->update(['response' => is_string($response) ? $response : 'No originate acknowledgement']);
             }, function () {
                 fax_webhook_debug('SendFaxJob: originate throttle busy, releasing', [
                     'outbound_fax_uuid' => $this->outboundFaxUuid,
@@ -238,6 +217,21 @@ class SendFaxJob implements ShouldQueue
 
                 $this->release(self::ORIGINATE_THROTTLE_RELEASE_SECONDS);
             });
+    }
+
+    private function recordOriginateFailure(OutboundFax $fax, string $status, string $response, string $reason): void
+    {
+        DB::transaction(function () use ($fax, $status, $response, $reason) {
+            $updated = OutboundFax::whereKey($fax->getKey())
+                ->where('current_attempt_uuid', $fax->current_attempt_uuid)->where('status', 'sending')
+                ->update(['status' => $status, 'response' => $response, 'call_uuid' => null, 'channel_missing_since' => null]);
+            if ($updated) {
+                $this->writeSyntheticFaxLog($fax, $reason);
+                if ($status === 'failed') {
+                    DB::afterCommit(fn () => SendFaxNotificationJob::dispatch($fax->getKey()));
+                }
+            }
+        });
     }
 
     /**

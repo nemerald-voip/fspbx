@@ -68,7 +68,7 @@ class GrandstreamHt8x1TemplateTest extends TestCase
     {
         $xml = $this->render([$this->line(6), $this->line(9)], [
             'device_model' => 'HT881',
-            'settings' => ['grandstream_ht8x1_fxo_5_destination' => '7000', 'grandstream_ht8x1_fxo_8_destination' => '8000'],
+            'settings' => ['grandstream_ht8x1_fxo_5_destination' => '16105550105', 'grandstream_ht8x1_fxo_8_destination' => '16105550108'],
         ]);
 
         $this->assertSame('', (string) $xml->config->P4061);
@@ -76,9 +76,10 @@ class GrandstreamHt8x1TemplateTest extends TestCase
         $this->assertSame('109', (string) $xml->config->P4068);
         $this->assertSame('secret9', (string) $xml->config->P4128);
         $this->assertSame('1', (string) $xml->config->P4603);
-        $this->assertSame('7000', (string) $xml->config->P92988);
+        $this->assertSame('16105550105', (string) $xml->config->P92988);
         $this->assertSame('pbx.example.test', (string) $xml->config->P92982);
-        $this->assertSame('8000', (string) $xml->config->P92991);
+        $this->assertSame('16105550108', (string) $xml->config->P92991);
+        $this->assertCount(0, $xml->xpath('/gs_provision/config/P92992'));
         $this->assertSame('pbx.example.test', (string) $xml->config->P92995);
         $this->assertSame('5060', (string) $xml->config->P92999);
     }
@@ -167,7 +168,12 @@ class GrandstreamHt8x1TemplateTest extends TestCase
             'http_auth_username' => 'provision-user', 'http_auth_password' => 'p&<secret>',
             'admin_password' => 'admin&password',
             'grandstream_ht8x1_fxo_1_destination' => '7000',
-            'grandstream_ht8x1_fxo_stage_method' => '1',
+            'grandstream_ht8x1_fxo_stage_method' => '2',
+            'grandstream_ht8x1_fxo_number_of_rings' => '5',
+            'grandstream_ht8x1_fxo_wait_for_dial_tone' => '1',
+            'grandstream_ht8x1_fxo_from_domain' => '',
+            'grandstream_ht8x1_fxo_country' => '17',
+            'grandstream_ht8x1_fxo_ac_termination' => '2',
             'grandstream_ht8x1_fxo_current_disconnect_threshold' => '150',
             'grandstream_ht8x1_fxo_disconnect_tone_detection' => '1',
             'grandstream_ht8x1_fxo_disconnect_tone' => 'fxoch1-4:f1=480@-32,f2=620@-32,c=500/500;',
@@ -181,8 +187,11 @@ class GrandstreamHt8x1TemplateTest extends TestCase
         $this->assertSame('15', (string) $xml->config->P28792);
         $this->assertSame('7000', (string) $xml->config->P3305);
         $this->assertSame('pbx.example.test', (string) $xml->config->P3306);
-        $this->assertSame('1', (string) $xml->config->P3304);
-        $this->assertSame('1', (string) $xml->config->P92921);
+        foreach (['P3304' => '2', 'P92921' => '2', 'P798' => '5', 'P92925' => '5',
+            'P3303' => '1', 'P92917' => '1', 'P8618' => '', 'P864' => '17', 'P92845' => '17',
+            'P899' => '2', 'P92841' => '2'] as $code => $expected) {
+            $this->assertSame($expected, (string) $xml->config->{$code}, $code);
+        }
         $this->assertSame('150', (string) $xml->config->P857);
         $this->assertSame('150', (string) $xml->config->P657);
         $this->assertSame('1', (string) $xml->config->P712);
@@ -197,7 +206,15 @@ class GrandstreamHt8x1TemplateTest extends TestCase
         $this->assertSame('', (string) $xml->config->P3305);
         $this->assertSame('', (string) $xml->config->P3306);
         $this->assertSame('', (string) $xml->config->P769);
-        $this->assertSame('2', (string) $xml->config->P3304);
+        foreach (['P3304' => '1', 'P92921' => '1', 'P798' => '2', 'P92925' => '2',
+            'P3303' => '0', 'P92917' => '0', 'P763' => '0', 'P563' => '0',
+            'P4301' => '0', 'P8618' => 'pbx.example.test'] as $code => $expected) {
+            $this->assertSame($expected, (string) $xml->config->{$code}, $code);
+        }
+        foreach (['P796', 'P864', 'P92845', 'P899', 'P92841'] as $code) {
+            $this->assertCount(0, $xml->xpath('/gs_provision/config/'.$code), $code);
+        }
+        $this->assertCount(1, $xml->xpath('/gs_provision/config/P769'));
         $this->assertSame('0', (string) $xml->config->P842);
         $this->assertSame('1', (string) $xml->config->P893);
         $this->assertCount(0, $xml->xpath('/gs_provision/config/P2'));

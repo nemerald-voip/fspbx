@@ -5,83 +5,32 @@ slug: /configuration/enable-2fa
 sidebar_position: 99
 ---
 
-# How to Enable Two-Factor Authentication by Email Challenge
+# Set up two-factor authentication
 
-Email Challenge adds an extra layer of security to user logins. When this setting is enabled, users will be required to complete a verification step by email during sign-in.
+## Use an authenticator app
 
-## Before you begin
+1. Open the user menu, select **My Account**, then select **Two-factor authentication**.
+2. Select **Set up authenticator**. If FS PBX asks for your current password, enter it. If your organization manages your password, use your directory password.
+3. In your authenticator app, scan the QR code or enter the setup key shown below it.
+4. Enter the six-digit code from the app and select **Verify and turn on**.
+5. Copy or download the recovery codes and keep them somewhere you can reach if you lose your phone. Each code works once. Select **I've saved my codes** to finish.
 
-Make sure your server is able to send email successfully. If email delivery is not working, users will not receive the verification message.
+At your next sign-in, enter your password and the code from your authenticator. Under **Other ways to sign in**, you can use a saved recovery code or have FS PBX email a code to your sign-in address. Users with an enabled authenticator complete a challenge at every new sign-in.
 
-## Enable Email Challenge
+From **My Account**, you can finish or discard an unfinished setup, view your recovery codes, generate new ones, or turn off two-factor authentication. Generating new recovery codes cancels the previous set.
 
-1. Sign in to your server as a superadmin.
-2. Open the **Default Settings** page.
-3. Add or edit the following setting:
+## Require email codes for other users
 
-**Category:** `authentication`
-**Subcategory:** `email_challenge`
-**Type:** `Boolean`
-**Value:** `True`
-**Enabled:** True
+A superadmin can require email verification for users who have yet to enable an authenticator. First confirm that the server can deliver email. In **Default Settings**, open the following setting.
 
-4. Save the setting.
+| Field | Value |
+| --- | --- |
+| Category | `authentication` |
+| Setting Name | `email_challenge` |
+| Type | `Boolean` |
+| Value | `True` |
+| Enabled | Yes |
 
-5. Clear the application cache by running the following command from the /var/www/fspbx folder:
+Save the setting, then run `php artisan cache:clear` from `/var/www/fspbx` to apply it immediately. To turn the requirement off, set the value to `False` and clear the cache again. Enrolled authenticator users can choose email as a backup with either setting.
 
-```
-php artisan cache:clear
-```
-
-## Example
-
-Your setting should look like this:
-
-* Category: `authentication`
-* Subcategory: `email_challenge`
-* Type: `Boolean`
-* Value: `True`
-* Enabled: enabled
-
-## What this setting does
-
-When enabled, the system will require users to complete an email verification challenge during login.
-
-This adds an extra security step beyond the password and helps protect user accounts from unauthorized access.
-
-## Test the feature
-
-After saving the setting:
-
-1. Sign out of the user account.
-2. Sign back in.
-3. Confirm that the system sends a verification email and prompts for the challenge during login.
-
-## Disable Email Challenge
-
-To turn the feature off, edit the same setting and either:
-
-* change **Value** to `False`, or
-* switch **Enabled** off
-
-Then save the change and run:
-
-```
-php artisan cache:clear
-```
-
-from the `/var/www/fspbx` folder.
-
-## Troubleshooting
-
-If users are not receiving the challenge email:
-
-* verify that outbound email is configured correctly on the server
-* confirm the user’s email address is correct
-* check spam or junk folders
-* clear the cache after updating the setting
-* allow up to one minute for the setting change to take effect
-
-## Notes
-
-Email Challenge is a simple way to add extra login protection using email verification.
+Email-only users can select **Remember this device for 7 days**. If a code does not arrive, check the sign-in address and spam folder, then select **Send a new code**. Use the newest email.

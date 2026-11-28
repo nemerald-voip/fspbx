@@ -62,10 +62,13 @@ class OutboundFax extends Model
         'response',
         'call_uuid',
         'current_attempt_uuid',
+        'sending_host',
+        'channel_missing_since',
         'notify_sent_at',
     ];
 
     protected $casts = [
+        'channel_missing_since' => 'datetime',
         'retry_at'       => 'datetime',
         'notify_sent_at' => 'datetime',
         'total_pages'    => 'integer',

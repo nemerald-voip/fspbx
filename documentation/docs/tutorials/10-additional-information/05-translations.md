@@ -11,7 +11,8 @@ FS PBX's interface is translated by its community, directly through GitHub.
 Interface text and email content have separate translation workflows. This page
 explains how to contribute translations. To change the language
 used by your system, see [Language Settings and Sounds](/docs/getting-started/language-settings/)
-in the Getting Started Guide.
+in the Getting Started Guide. For regional preferences such as day/month order or
+a 24-hour clock, see [Date and time formats](/docs/getting-started/language-settings/#date-and-time-formats).
 
 ## Translating interface text
 
