@@ -1,4 +1,5 @@
 {
+    "Custom Dialplan": "",
     " (staging)": " (тестовая среда)",
     "% of calls answered within 60s of entering the queue": "% вызовов, принятых в течение 60 с после входа в очередь",
     "&laquo; Previous": "&laquo; Назад",

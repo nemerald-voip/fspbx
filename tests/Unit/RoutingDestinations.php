@@ -18,6 +18,7 @@ class RoutingDestinations
             'ivrs' => [Models\IvrMenus::class, 'ivr_menu_extension', '9155', 'transfer', '9155 XML example.test'],
             'business_hours' => [Models\BusinessHour::class, 'extension', '9201', 'transfer', '9201 XML example.test'],
             'time_conditions' => [Models\Dialplans::class, 'dialplan_number', '9300', 'transfer', '9300 XML example.test'],
+            'custom_dialplans' => [Models\Dialplans::class, 'dialplan_number', '9301', 'transfer', '9301 XML example.test'],
             'contact_centers' => [Models\CallCenterQueues::class, 'queue_extension', '99979', 'transfer', '99979 XML example.test'],
             'bridges' => [Models\Bridge::class, 'bridge_uuid', self::TARGET, 'lua', 'bridge.lua '.self::TARGET],
             'faxes' => [Models\Faxes::class, 'fax_extension', '700', 'transfer', '700 XML example.test'],
@@ -37,7 +38,11 @@ class RoutingDestinations
     {
         if (! $model) return null;
         $target = new $model;
-        $target->setRawAttributes([$target->getKeyName() => self::TARGET, 'domain_uuid' => self::DOMAIN, $field => $value]);
+        $attributes = [$target->getKeyName() => self::TARGET, 'domain_uuid' => self::DOMAIN, $field => $value];
+        if ($model === Models\Dialplans::class) {
+            $attributes += ['dialplan_enabled' => 'true', 'dialplan_destination' => 'true', 'dialplan_context' => 'default'];
+        }
+        $target->setRawAttributes($attributes);
 
         return $target;
     }

@@ -33,6 +33,7 @@ class CallRoutingOptionsService
             'ivrs' => ['label' => $translate ? __('Virtual Receptionist') : 'Virtual Receptionist', 'model' => IvrMenus::class, 'field' => 'ivr_menu_extension', 'name' => 'ivr_menu_name'],
             'business_hours' => ['label' => $translate ? __('Business Hours') : 'Business Hours', 'model' => BusinessHour::class, 'field' => 'extension', 'name' => 'name'],
             'time_conditions' => ['label' => $translate ? __('Schedule') : 'Schedule', 'model' => Dialplans::class, 'field' => 'dialplan_number', 'name' => 'dialplan_name'],
+            'custom_dialplans' => ['label' => $translate ? __('Custom Dialplan') : 'Custom Dialplan', 'model' => Dialplans::class, 'field' => 'dialplan_number', 'name' => 'dialplan_name'],
             'contact_centers' => ['label' => $translate ? __('Contact Center') : 'Contact Center', 'model' => CallCenterQueues::class, 'field' => 'queue_extension', 'name' => 'queue_name'],
             'bridges' => ['label' => $translate ? __('Bridge') : 'Bridge', 'model' => Bridge::class, 'field' => 'bridge_uuid', 'name' => 'bridge_name', 'handler' => 'bridge'],
             'faxes' => ['label' => $translate ? __('Fax') : 'Fax', 'model' => Faxes::class, 'field' => 'fax_extension', 'name' => 'fax_name'],
@@ -80,15 +81,15 @@ class CallRoutingOptionsService
             return [];
         }
 
-        return $this->buildOptions($definition['model'], $definition['field'], $definition['name']);
+        return $this->buildOptions($type, $definition['model'], $definition['field'], $definition['name']);
     }
 
-    protected function buildOptions($model, string $extensionField, string $nameField = ''): array
+    protected function buildOptions(string $type, $model, string $extensionField, string $nameField = ''): array
     {
         // Create an instance of the model
         $modelInstance = new $model;
 
-        $query = $this->targetQuery($model);
+        $query = $this->targetQuery($model, $type);
 
         if ($model === AiAgent::class) {
             $query->where('enabled', true)->where('provisioning_status', 'synced');
@@ -101,11 +102,16 @@ class CallRoutingOptionsService
                 ->whereNotNull('bridge_destination')->where('bridge_destination', '<>', '');
         }
 
-        // Apply specific conditions only for Dialplans
-        if ($model === Dialplans::class) {
+        if ($type === 'time_conditions') {
             $query->where('dialplan_enabled', 'true')
                 ->where('dialplan_number', '<>', '')
                 ->where('dialplan_xml', '~*', '(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=[^>]*');
+        }
+        if ($type === 'custom_dialplans') {
+            $query->where('dialplan_enabled', 'true')
+                ->where('dialplan_destination', 'true')
+                ->where('dialplan_number', '<>', '')
+                ->where('dialplan_context', '<>', 'public');
         }
 
         $fields = [$modelInstance->getKeyName(), $extensionField, $nameField];
@@ -135,9 +141,17 @@ class CallRoutingOptionsService
         return $options;
     }
 
-    private function targetQuery(string $model): Builder
+    private function targetQuery(string $model, ?string $action = null): Builder
     {
         $query = $model::query()->where('domain_uuid', $this->domainUuid);
+
+        if ($action === 'custom_dialplans') {
+            $query->where('dialplan_enabled', 'true')
+                ->where('dialplan_destination', 'true')
+                ->where('dialplan_number', '<>', '')
+                ->where('dialplan_context', '<>', 'public')
+                ->whereNotIn('dialplan_uuid', DynamicRoute::query()->select('dialplan_uuid'));
+        }
 
         if ($model === Voicemails::class) {
             $query->with(['extension' => function ($query) {
@@ -374,7 +388,7 @@ class CallRoutingOptionsService
                         ->orWhereNull('domain_uuid');
                 })
                 ->where('dialplan_context', '!=', 'public')
-                ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
+                ->select('dialplan_uuid', 'domain_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
                 ->first();
 
             // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -440,7 +454,7 @@ class CallRoutingOptionsService
                 $query->where('domain_uuid', $domainUuid)
                     ->orWhereNull('domain_uuid');
             })
-            ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
+            ->select('dialplan_uuid', 'domain_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order', 'dialplan_destination', 'dialplan_context')
             ->first();
 
         // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
@@ -622,6 +636,18 @@ class CallRoutingOptionsService
             }
         }
 
+        if (in_array($dialplan->dialplan_destination, [true, 'true'], true)
+            && $dialplan->dialplan_context !== 'public'
+            && $dialplan->domain_uuid === $this->domainUuid
+            && ! DynamicRoute::query()->where('dialplan_uuid', $dialplan->dialplan_uuid)->exists()) {
+            return [
+                'type' => 'custom_dialplans',
+                'extension' => $extension,
+                'option' => $dialplan->dialplan_uuid,
+                'name' => $dialplan->dialplan_name,
+            ];
+        }
+
         // Check if dialplan_order is 300 and assume it's time conditions
         if ($dialplan->dialplan_order == 300) {
             return [
@@ -713,6 +739,7 @@ class CallRoutingOptionsService
             'faxes' => __("Fax"),
             'business_hours' => __('Business Hours'),
             'time_conditions' => __('Schedules'),
+            'custom_dialplans' => __('Custom Dialplan'),
             'bridges' => __('Bridge'),
             'call_flows' => __('Call Flow'),
             'dynamic_routes' => __('Dynamic Route'),
@@ -790,7 +817,7 @@ class CallRoutingOptionsService
 
         $model = new $definition['model'];
 
-        return $this->targetQuery($definition['model'])
+        return $this->targetQuery($definition['model'], $action)
             ->where($byDestination ? $definition['field'] : $model->getKeyName(), $value)->first();
     }
 
@@ -802,7 +829,7 @@ class CallRoutingOptionsService
             return false;
         }
 
-        return $this->targetQuery($definition['model'])->whereKey($uuid)
+        return $this->targetQuery($definition['model'], $action)->whereKey($uuid)
             ->where($definition['field'], $value)->exists();
     }
 
@@ -874,6 +901,9 @@ class CallRoutingOptionsService
         if (isset($definition['model'])) {
             $model = $definition['model'];
             if (! $target instanceof $model || ! $this->domainUuid || $target->domain_uuid !== $this->domainUuid) {
+                throw ValidationException::withMessages(['target' => __('Select a valid routing target in this account.')]);
+            }
+            if ($action === 'custom_dialplans' && ($target->dialplan_enabled !== true || ! in_array($target->dialplan_destination, [true, 'true'], true) || $target->dialplan_context === 'public' || DynamicRoute::query()->where('dialplan_uuid', $target->dialplan_uuid)->exists())) {
                 throw ValidationException::withMessages(['target' => __('Select a valid routing target in this account.')]);
             }
 

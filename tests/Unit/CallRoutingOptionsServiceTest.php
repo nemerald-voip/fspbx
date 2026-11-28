@@ -358,6 +358,97 @@ class CallRoutingOptionsServiceTest extends TestCase
         ]], (new CallRoutingOptionsService(RoutingDestinations::DOMAIN))->getOptions());
     }
 
+    public function test_api_phone_number_requests_validate_custom_dialplan_targets(): void
+    {
+        Schema::create('dynamic_routes', function (Blueprint $table) {
+            $table->uuid('dynamic_route_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->uuid('dialplan_uuid')->nullable();
+        });
+
+        $domainUuid = RoutingDestinations::DOMAIN;
+        $validUuid = (string) Str::uuid();
+        DB::table('v_dialplans')->insert([
+            'dialplan_uuid' => $validUuid, 'domain_uuid' => $domainUuid, 'dialplan_name' => 'Route',
+            'dialplan_number' => '9400', 'dialplan_context' => 'default', 'dialplan_enabled' => 'true',
+            'dialplan_destination' => 'true', 'dialplan_xml' => '<action application="transfer"/>', 'dialplan_order' => 1,
+        ]);
+
+        $route = new class($domainUuid) {
+            public function __construct(private string $domainUuid) {}
+
+            public function parameter(string $name, mixed $default = null): mixed
+            {
+                return $name === 'domain_uuid' ? $this->domainUuid : $default;
+            }
+        };
+
+        foreach ([
+            \App\Http\Requests\Api\V1\StorePhoneNumberRequest::class,
+            \App\Http\Requests\Api\V1\UpdatePhoneNumberRequest::class,
+        ] as $requestClass) {
+            $valid = new $requestClass(['routing_options' => [['type' => 'custom_dialplans', 'extension' => '9400']]]);
+            $valid->setRouteResolver(fn () => $route);
+            $rules = array_intersect_key($valid->rules(), array_flip(['routing_options.*.type', 'routing_options.*.extension']));
+            $this->assertTrue(\Illuminate\Support\Facades\Validator::make($valid->all(), $rules)->passes());
+
+            $invalid = new $requestClass(['routing_options' => [['type' => 'custom_dialplans', 'extension' => '9499']]]);
+            $invalid->setRouteResolver(fn () => $route);
+            $this->assertFalse(\Illuminate\Support\Facades\Validator::make($invalid->all(), $rules)->passes());
+        }
+    }
+
+    public function test_custom_dialplan_selector_excludes_invalid_and_time_condition_dialplans(): void
+    {
+        $domainUuid = RoutingDestinations::DOMAIN;
+        $rows = [
+            ['name' => 'Route', 'number' => '9400', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>'],
+            ['name' => 'Disabled', 'number' => '9401', 'context' => 'default', 'enabled' => 'false', 'destination' => 'true', 'xml' => '<action application="transfer"/>'],
+            ['name' => 'Public', 'number' => '9402', 'context' => 'public', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>'],
+            ['name' => 'Schedule', 'number' => '9403', 'context' => 'default', 'enabled' => 'true', 'destination' => 'false', 'xml' => '<action application="set" data="hour=9"/>'],
+            ['name' => 'Foreign', 'number' => '9404', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="transfer"/>', 'domain' => RoutingDestinations::TARGET],
+        ];
+        $dynamicRouteUuid = (string) Str::uuid();
+        Schema::create('dynamic_routes', function (Blueprint $table) {
+            $table->uuid('dynamic_route_uuid')->primary();
+            $table->uuid('domain_uuid');
+            $table->uuid('dialplan_uuid')->nullable();
+        });
+        DB::table('dynamic_routes')->insert([
+            'dynamic_route_uuid' => (string) Str::uuid(),
+            'domain_uuid' => $domainUuid,
+            'dialplan_uuid' => $dynamicRouteUuid,
+        ]);
+        $rows[] = ['name' => 'Dynamic Route: Generated', 'number' => '9500', 'context' => 'default', 'enabled' => 'true', 'destination' => 'true', 'xml' => '<action application="set" data="dynamic_route_uuid='.$dynamicRouteUuid.'"/>', 'uuid' => $dynamicRouteUuid];
+
+        foreach ($rows as $index => $row) {
+            DB::table('v_dialplans')->insert([
+                'dialplan_uuid' => $row['uuid'] ?? (string) Str::uuid(), 'domain_uuid' => $row['domain'] ?? $domainUuid,
+                'dialplan_name' => $row['name'], 'dialplan_number' => $row['number'],
+                'dialplan_context' => $row['context'], 'dialplan_enabled' => $row['enabled'],
+                'dialplan_destination' => $row['destination'], 'dialplan_xml' => $row['xml'],
+                'dialplan_order' => $index,
+            ]);
+        }
+        request()->merge(['category' => 'custom_dialplans']);
+        $options = (new CallRoutingOptionsService($domainUuid))->getOptions();
+        $this->assertSame(['9400'], array_column($options, 'extension'));
+
+        $service = new CallRoutingOptionsService($domainUuid);
+        $this->assertNull($service->findTarget('custom_dialplans', $dynamicRouteUuid));
+
+        $target = $service->findTarget('custom_dialplans', DB::table('v_dialplans')->where('dialplan_number', '9400')->value('dialplan_uuid'));
+        $this->assertSame(['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test'], (new CallRoutingOptionsService($domainUuid))->actionForTarget('custom_dialplans', $target, 'example.test'));
+        $saved = (new CallRoutingOptionsService($domainUuid))->reverseEngineerDestinationActions(json_encode([['destination_app' => 'transfer', 'destination_data' => '9400 XML example.test']]))[0];
+        $this->assertSame('custom_dialplans', $saved['type']);
+        $this->assertSame($target->dialplan_uuid, $saved['option']);
+
+        if (DB::connection()->getDriverName() === 'pgsql') {
+            request()->merge(['category' => 'time_conditions']);
+            $this->assertSame(['9403'], array_column((new CallRoutingOptionsService($domainUuid))->getOptions(), 'extension'));
+        }
+    }
+
     public function test_dynamic_route_selector_excludes_disabled_and_foreign_routes(): void
     {
         Schema::create('dynamic_routes', function (Blueprint $table) {
@@ -385,6 +476,7 @@ class CallRoutingOptionsServiceTest extends TestCase
             $table->string('dialplan_uuid')->primary();
             $table->string('domain_uuid')->nullable();
             $table->string('dialplan_name')->nullable();
+            $table->string('dialplan_destination')->nullable();
             $table->string('dialplan_number')->nullable();
             $table->string('dialplan_context')->nullable();
             $table->text('dialplan_xml')->nullable();

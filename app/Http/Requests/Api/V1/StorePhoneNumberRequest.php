@@ -49,6 +49,17 @@ class StorePhoneNumberRequest extends FormRequest
                 'present',
                 function ($attribute, $value, $fail) {
                     $type = data_get($this->input(), str_replace('.extension', '.type', $attribute));
+                    if ($type === 'custom_dialplans' && ! \App\Models\Dialplans::query()
+                        ->where('domain_uuid', (string) $this->route('domain_uuid'))
+                        ->where('dialplan_number', $value)
+                        ->where('dialplan_enabled', 'true')
+                        ->where('dialplan_destination', 'true')
+                        ->where('dialplan_context', '<>', 'public')
+                        ->whereNotIn('dialplan_uuid', \App\Models\DynamicRoute::query()->select('dialplan_uuid'))
+                        ->exists()) {
+                        $fail('Select a valid custom dialplan in this account.');
+                        return;
+                    }
 
                     // These types don't require extension digits
                     if (! \App\Services\CallRoutingOptionsService::requiresTarget((string) $type)) {
@@ -60,7 +71,7 @@ class StorePhoneNumberRequest extends FormRequest
                         return;
                     }
 
-                    if (in_array(\App\Services\CallRoutingOptionsService::destinationHandler((string) $type), ['bridge', 'recording'], true)) {
+                    if ($type === 'custom_dialplans' || in_array(\App\Services\CallRoutingOptionsService::destinationHandler((string) $type), ['bridge', 'recording'], true)) {
                         return;
                     }
 
@@ -91,7 +102,7 @@ class StorePhoneNumberRequest extends FormRequest
         $routing = $this->input('routing_options', []);
         if (is_array($routing) && count($routing)) {
             foreach ($routing as $i => $r) {
-                if (($r['type'] ?? null) === 'bridges') {
+                if (in_array($r['type'] ?? null, ['bridges', 'custom_dialplans'], true)) {
                     continue;
                 }
 
